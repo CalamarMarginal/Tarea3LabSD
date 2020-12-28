@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package admin;
+
+//ruta
+option go_package = "";
+
+message CommandAdmin {
+    string tipoComm = 1; //create-update-delete
+    string nombreDominio = 2; //nombre.dominio
+    string tipoCambio = 3; //nil - <nombre>|<ip>
+    string paramNuevo = 4; //ip - <valornuevo> - nil
+}
+
+
+message RedirectDNS {
+    string ipDNS = 1;
+}
+
+service AdminBrokerService {
+    // admin envia comando -> broker redirige a dns
+    rpc AdminBrokerComm (CommandAdmin) returns (RedirectDNS) {};
+}

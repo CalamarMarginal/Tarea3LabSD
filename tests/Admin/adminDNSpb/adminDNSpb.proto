@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+package admin;
+
+//ruta
+option go_package = "";
+
+
+message createNomDomDNS {
+    string nombre = 1;
+    string ipCreado = 2;
+}
+
+message updateNomDomDNS {
+    string nombreDom = 1;
+    string tipoCambio = 2;
+    string valorNuevo = 3;
+}
+
+message deleteNomDomDNS {
+    string nombreDel = 1;
+}
+
+message dnsResponse{
+    string ack = 1;
+}
+
+
+service AdminDNSService {
+    // admin envia comando -> dns recibe
+    rpc AdminDNSCr (createNomDomDNS) returns (dnsResponse) {};
+    rpc AdminDNSUp (updateNomDomDNS) returns (dnsResponse) {};
+    rpc AdminDNSDl (deleteNomDomDNS) returns (dnsResponse) {};
+}
