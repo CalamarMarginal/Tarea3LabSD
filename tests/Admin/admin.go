@@ -10,6 +10,7 @@ import (
 	"time"
 
 	adminBrokerpb "./adminBrokerpb"
+	adminDNSpb "./adminDNSpb"
 
 	"google.golang.org/grpc"
 )
@@ -30,7 +31,7 @@ func opcionComando() int {
 	return opcion
 }
 
-func sendCmdToBroker(c adminBrokerpb.AdminBrokerServiceClient, comandoInfo string, comm int) {
+func sendCmdToBroker(c adminBrokerpb.AdminBrokerServiceClient, comandoInfo string, comm int) string {
 
 	if comm == 1 { //create
 		ncom := "Create"
@@ -49,7 +50,7 @@ func sendCmdToBroker(c adminBrokerpb.AdminBrokerServiceClient, comandoInfo strin
 		}
 		time.Sleep(1000 * time.Millisecond)
 		log.Printf("Redirigido a: %v", res.IpDNS)
-
+		return res.IpDNS
 	} else if comm == 2 { //update
 		ncom := "Update"
 		aux := strings.Split(comandoInfo, " ")
@@ -68,6 +69,7 @@ func sendCmdToBroker(c adminBrokerpb.AdminBrokerServiceClient, comandoInfo strin
 		}
 		time.Sleep(1000 * time.Millisecond)
 		log.Printf("Redirigido a: %v", res.IpDNS)
+		return res.IpDNS
 	} else { //delete
 		ncom := "Delete"
 		req := &adminBrokerpb.CommandAdmin{
@@ -82,12 +84,82 @@ func sendCmdToBroker(c adminBrokerpb.AdminBrokerServiceClient, comandoInfo strin
 		}
 		time.Sleep(1000 * time.Millisecond)
 		log.Printf("Redirigido a: %v", res.IpDNS)
+		return res.IpDNS
+	}
+}
+
+func sendCmdToDNS(c adminDNSpb.AdminDNSServiceClient, comandoInfo string, comm int) {
+
+	if comm == 1 { //create
+		ncom := "Create"
+		aux := strings.Split(comandoInfo, " ")
+		name := aux[0]
+		ip := aux[1]
+		req := &adminDNSpb.CommandAdminDNS{
+			TipoComm:      ncom,
+			NombreDominio: name,
+			TipoCambio:    "-1",
+			ParamNuevo:    ip,
+		}
+		res, err := c.AdminDNSComm(context.Background(), req)
+		if err != nil {
+			log.Fatalf("Error: \n%v", err)
+		}
+		time.Sleep(1000 * time.Millisecond)
+		log.Printf("DNS dice %v", res.Ack)
+
+	} else if comm == 2 { //update
+		ncom := "Update"
+		aux := strings.Split(comandoInfo, " ")
+		name := aux[0]
+		tipo := aux[1]
+		param := aux[2]
+		req := &adminDNSpb.CommandAdminDNS{
+			TipoComm:      ncom,
+			NombreDominio: name,
+			TipoCambio:    tipo,
+			ParamNuevo:    param,
+		}
+		res, err := c.AdminDNSComm(context.Background(), req)
+		if err != nil {
+			log.Fatalf("Error: \n%v", err)
+		}
+		time.Sleep(1000 * time.Millisecond)
+		log.Printf("DNS dice %v", res.Ack)
+	} else { //delete
+		ncom := "Delete"
+		req := &adminDNSpb.CommandAdminDNS{
+			TipoComm:      ncom,
+			NombreDominio: comandoInfo,
+			TipoCambio:    "-1",
+			ParamNuevo:    "-1",
+		}
+		res, err := c.AdminDNSComm(context.Background(), req)
+		if err != nil {
+			log.Fatalf("Error: \n%v", err)
+		}
+		time.Sleep(1000 * time.Millisecond)
+		log.Printf("DNS dice %v", res.Ack)
 	}
 
 }
 
+func connectToDNS(ipConnect string, comando string, tipocom int) {
+	cc, err := grpc.Dial(ipConnect, grpc.WithInsecure())
+
+	if err != nil {
+		log.Fatalf("Failed to connect %v", err)
+	} else {
+		fmt.Println("Conectado al DNS:", ipConnect)
+		//se ejecuta al final del ciclo de vida de la funcion
+		defer cc.Close()
+	}
+	c := adminDNSpb.NewAdminDNSServiceClient(cc)
+
+	sendCmdToDNS(c, comando, tipocom)
+}
+
 func main() {
-	//var cmdInfo string
 
 	cc, err := grpc.Dial(ipBroker, grpc.WithInsecure())
 
@@ -113,8 +185,11 @@ func main() {
 
 	scanner := bufio.NewScanner(os.Stdin)
 	scanner.Scan()
-	line := scanner.Text()
+	coman := scanner.Text()
 
-	sendCmdToBroker(c, line, comd)
+	ipRedirect := sendCmdToBroker(c, coman, comd)
+	fmt.Println(ipRedirect)
+
+	connectToDNS(ipRedirect, coman, comd)
 
 }

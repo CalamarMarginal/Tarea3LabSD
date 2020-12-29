@@ -39,21 +39,13 @@ func redirectToDNS() string {
 		opciondns := y1.Intn(4)
 		fmt.Println("Redirigiendo a DNS", opciondns, "...")
 		if opciondns == 1 { //redirige a dns1
-			//if ping(ipDNS1) {
 			dnsip = ipDNS1
 			return dnsip
-			//}
 		} else if opciondns == 2 { //redirige a dns2
-			//if ping(ipDNS2) {
 			dnsip = ipDNS2
 			return dnsip
-			//}
 		} else if opciondns == 3 { //redirige a dns3
-			//if ping(ipDNS3) {
 			dnsip = ipDNS3
-			return dnsip
-			//}
-		} else {
 			return dnsip
 		}
 	}
