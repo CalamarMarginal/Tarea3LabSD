@@ -11,6 +11,7 @@ message ClienteBrRequest {
 
 message DnsClientResponse {
     string ipDominio = 1;
+    string reloj = 2;
 }
 
 service BrokerDNSService {

@@ -51,8 +51,10 @@ func (*serverAdmin) AdminDNSComm(ctx context.Context, req *adminDNSpb.CommandAdm
 func (*serverBroker) BrokerDNSComm(ctx context.Context, req *brokerDNSpb.ClienteBrRequest) (*brokerDNSpb.DnsClientResponse, error) {
 	fmt.Println("Request recibido:", req.CommCliente)
 	ack := "tu pagina esta en 10.11.12.13"
+	reloj := "0.0.0"
 	res := &brokerDNSpb.DnsClientResponse{
 		IpDominio: ack,
+		Reloj:     reloj,
 	}
 	return res, nil
 }

@@ -18,8 +18,8 @@ const ipDNS1 string = "0.0.0.0:50052"
 const ipDNS2 string = "0.0.0.0:50053" //puerto propio
 const ipDNS3 string = "0.0.0.0:50054"
 
-const ipDNS1Broker string = "0.0.0.0:50055" 
-const ipDNS2Broker string = "0.0.0.0:50056"//puerto propio
+const ipDNS1Broker string = "0.0.0.0:50055"
+const ipDNS2Broker string = "0.0.0.0:50056" //puerto propio
 const ipDNS3Broker string = "0.0.0.0:50057"
 
 type serverAdmin struct{}
@@ -51,8 +51,10 @@ func (*serverAdmin) AdminDNSComm(ctx context.Context, req *adminDNSpb.CommandAdm
 func (*serverBroker) BrokerDNSComm(ctx context.Context, req *brokerDNSpb.ClienteBrRequest) (*brokerDNSpb.DnsClientResponse, error) {
 	fmt.Println("Request recibido:", req.CommCliente)
 	ack := "tu pagina esta en 10.11.12.13"
+	reloj := "0.0.0"
 	res := &brokerDNSpb.DnsClientResponse{
 		IpDominio: ack,
+		Reloj:     reloj,
 	}
 	return res, nil
 }

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	clientepb "../clienteBrokerpb"
+	clientepb "./clienteBrokerpb"
 	"google.golang.org/grpc"
 )
 
@@ -44,7 +44,7 @@ func opcionViable() int {
 	return opcion2
 }
 
-func clientBroker(c clientepb.clienteBrokerServiceClient) {
+func clientBroker(c clientepb.ClienteBrokerServiceClient) {
 
 	var dominio string
 
@@ -71,7 +71,7 @@ func clientBroker(c clientepb.clienteBrokerServiceClient) {
 			ipDominio := res.GetIp()
 			reloj := res.GetReloj()
 
-			fmt.Println("La ip es ", IpDominio)
+			fmt.Println("La ip es ", ipDominio)
 			fmt.Println("La reloj es ", reloj)
 
 		} else {
