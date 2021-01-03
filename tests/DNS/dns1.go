@@ -57,6 +57,7 @@ func (*serverAdmin) AdminDNSComm(ctx context.Context, req *adminDNSpb.CommandAdm
 		updateDomain(req.NombreDominio, req.TipoCambio, req.ParamNuevo, req.TipoComm)
 	} else if req.TipoComm == "Delete" {
 		//delete
+		deleteDomain(req.TipoComm, req.NombreDominio)
 	}
 
 	ack := "escuche tu comando"
@@ -91,6 +92,12 @@ func updateDomain(dominio string, tipoCambio string, parametroNuevo string, coma
 	data := dominio + "?" + tipoCambio + "?" + parametroNuevo
 	writeFile(path, comando, "ZF", data)
 
+}
+
+func deleteDomain(dominio string, comando string) {
+	path := "./ZF/" + dominio + ".txt"
+	data := ""
+	writeFile(path, comando, "ZF", data)
 }
 
 func createFile(path string) {
@@ -150,6 +157,7 @@ func writeFile(path string, comando string, archivo string, data string) {
 				if isError(err) {
 					return
 				}
+				//cuando el archivo no existe
 			} else {
 				aux := strings.Split(data, "?")
 
@@ -224,6 +232,44 @@ func writeFile(path string, comando string, archivo string, data string) {
 				fmt.Println(err)
 				os.Exit(1)
 			}
+		} else if comando == "Delete" {
+			input, err := ioutil.ReadFile(path)
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+
+			relojAntiguo := readFileReloj(path)
+			// fmt.Println("reloj", relojAntiguo)
+			reloj_aux := strings.Split(relojAntiguo, ",")
+			i, err := strconv.Atoi(reloj_aux[0])
+			if isError(err) {
+				return
+			}
+			i += 1
+			s := strconv.Itoa(i)
+			relojNuevo := s + "," + reloj_aux[1] + "," + reloj_aux[2]
+
+			aux := strings.Split(data, "?")
+
+			// dominio := aux[0]
+			valorAntiguo := aux[1]
+			valorNuevo := aux[2]
+
+			output := bytes.Replace(input, []byte(valorAntiguo), []byte(valorNuevo), -1)
+
+			if err = ioutil.WriteFile(path, output, 0666); err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+
+			output2 := bytes.Replace(input, []byte(relojAntiguo), []byte(relojNuevo), -1)
+
+			if err = ioutil.WriteFile(path, output2, 0666); err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+
 		}
 	} else {
 
