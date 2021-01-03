@@ -20,10 +20,10 @@ const ipBroker string = "0.0.0.0:50059"
 func opcionComando() int {
 	var opcion int
 	for {
-		fmt.Printf("Elija una opcion: \n 1.Create \n 2.Update \n 3.Delete \n")
+		fmt.Printf("Elija una opcion: \n 1.Create \n 2.Update \n 3.Delete \n 4.Salir \n")
 		fmt.Scanln(&opcion)
-		if opcion != 1 && opcion != 2 && opcion != 3 {
-			fmt.Printf("Debe elegir una opcion viable (1, 2 o 3) .. \n")
+		if opcion != 1 && opcion != 2 && opcion != 3 && opcion != 4 {
+			fmt.Printf("Debe elegir una opcion viable (1, 2, 3 o 4) .. \n")
 		} else {
 			break
 		}
@@ -161,35 +161,41 @@ func connectToDNS(ipConnect string, comando string, tipocom int) {
 
 func main() {
 
-	cc, err := grpc.Dial(ipBroker, grpc.WithInsecure())
+	for {
 
-	if err != nil {
-		log.Fatalf("Failed to connect %v", err)
-	} else {
-		fmt.Println("Conectado al Broker")
-		//se ejecuta al final del ciclo de vida de la funcion
-		defer cc.Close()
+		cc, err := grpc.Dial(ipBroker, grpc.WithInsecure())
+
+		if err != nil {
+			log.Fatalf("Failed to connect %v", err)
+		} else {
+			fmt.Println("Conectado al Broker")
+			//se ejecuta al final del ciclo de vida de la funcion
+			defer cc.Close()
+		}
+		c := adminBrokerpb.NewAdminBrokerServiceClient(cc)
+
+		comd := opcionComando()
+		if comd == 1 {
+			fmt.Println("No agregue create|update|delete al ingresar el comando")
+			fmt.Println("Formato Create: <nombre.dominio> <ip>")
+		} else if comd == 2 {
+			fmt.Println("No agregue create|update|delete al ingresar el comando")
+			fmt.Println("Formato Update: <nombre.dominio> <name|ip> <parametro>")
+		} else if comd == 3 {
+			fmt.Println("No agregue create|update|delete al ingresar el comando")
+			fmt.Println("Formato Delete: <nombre.dominio> ")
+		} else {
+			break
+		}
+
+		scanner := bufio.NewScanner(os.Stdin)
+		scanner.Scan()
+		coman := scanner.Text()
+
+		ipRedirect := sendCmdToBroker(c, coman, comd)
+		fmt.Println(ipRedirect)
+
+		connectToDNS(ipRedirect, coman, comd)
 	}
-	c := adminBrokerpb.NewAdminBrokerServiceClient(cc)
-
-	comd := opcionComando()
-	fmt.Println("No agregue create|update|delete al ingresar el comando")
-
-	if comd == 1 {
-		fmt.Println("Formato Create: <nombre.dominio> <ip>")
-	} else if comd == 2 {
-		fmt.Println("Formato Update: <nombre.dominio> <name|ip> <parametro>")
-	} else if comd == 3 {
-		fmt.Println("Formato Delete: <nombre.dominio> ")
-	}
-
-	scanner := bufio.NewScanner(os.Stdin)
-	scanner.Scan()
-	coman := scanner.Text()
-
-	ipRedirect := sendCmdToBroker(c, coman, comd)
-	fmt.Println(ipRedirect)
-
-	connectToDNS(ipRedirect, coman, comd)
 
 }

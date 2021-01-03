@@ -1,10 +1,16 @@
 package main
 
 import (
+	"bufio"
+	"bytes"
 	"context"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net"
+	"os"
+	"strconv"
+	"strings"
 	"sync"
 
 	adminDNSpb "./adminDNSpb"
@@ -21,6 +27,8 @@ const ipDNS3 string = "0.0.0.0:50054"
 const ipDNS1Broker string = "0.0.0.0:50055" //puerto propio
 const ipDNS2Broker string = "0.0.0.0:50056"
 const ipDNS3Broker string = "0.0.0.0:50057"
+
+var auxiliar int //si el auxiliar es 1 es porque es la primera vez que se crea el archivo
 
 type serverAdmin struct{}
 type serverBroker struct{}
@@ -41,6 +49,16 @@ func (*serverAdmin) AdminDNSComm(ctx context.Context, req *adminDNSpb.CommandAdm
 	fmt.Println("Nombre.Dominio:", req.NombreDominio)
 	fmt.Println("Tipo cambio:", req.TipoCambio)
 	fmt.Println("Parametro nuevo:", req.ParamNuevo)
+
+	if req.TipoComm == "Create" {
+		//create
+		createDomain(req.NombreDominio, req.ParamNuevo, req.TipoComm)
+	} else if req.TipoComm == "Update" {
+		updateDomain(req.NombreDominio, req.TipoCambio, req.ParamNuevo, req.TipoComm)
+	} else if req.TipoComm == "Delete" {
+		//delete
+	}
+
 	ack := "escuche tu comando"
 	res := &adminDNSpb.DnsResponse{
 		Ack: ack,
@@ -57,6 +75,199 @@ func (*serverBroker) BrokerDNSComm(ctx context.Context, req *brokerDNSpb.Cliente
 		Reloj:     reloj,
 	}
 	return res, nil
+}
+
+func createDomain(dominio string, ip string, comando string) {
+	reloj := "1,0,0"
+	path := "./ZF/" + dominio + ".txt"
+	createFile(path)
+	data := reloj + "?" + dominio + "?" + ip
+	writeFile(path, comando, "ZF", data)
+
+}
+
+func updateDomain(dominio string, tipoCambio string, parametroNuevo string, comando string) {
+	path := "./ZF/" + dominio + ".txt"
+	data := dominio + "?" + tipoCambio + "?" + parametroNuevo
+	writeFile(path, comando, "ZF", data)
+
+}
+
+func createFile(path string) {
+	var _, err = os.Stat(path)
+
+	// revisa si el archivo existe o no
+	if os.IsNotExist(err) {
+		//se crea directorio si es que no existe
+
+		var file, err = os.Create(path)
+		if isError(err) {
+			return
+		}
+		fmt.Println("Archivo creado", path)
+		auxiliar = 1
+		defer file.Close()
+	}
+
+}
+func writeFile(path string, comando string, archivo string, data string) {
+
+	// Open file using READ & WRITE permission.
+	var file, err = os.OpenFile(path, os.O_APPEND|os.O_WRONLY, 0644)
+	if isError(err) {
+		return
+	}
+	defer file.Close()
+
+	fmt.Println("path", path)
+	fmt.Println("archivo)", archivo)
+	fmt.Println("data", data)
+
+	if archivo == "ZF" {
+
+		if comando == "Create" {
+
+			if auxiliar == 1 {
+
+				fmt.Println("entre a zf")
+				aux := strings.Split(data, "?")
+
+				reloj := aux[0]
+				dominio := aux[1]
+				ip := aux[2]
+
+				formato := dominio + " IN A " + ip
+
+				fmt.Println("reloj", reloj)
+				fmt.Println("dominio", dominio)
+				fmt.Println("ip", ip)
+
+				_, err = fmt.Fprintln(file, reloj)
+				if isError(err) {
+					return
+				}
+				_, err = fmt.Fprintln(file, formato)
+				if isError(err) {
+					return
+				}
+			} else {
+				aux := strings.Split(data, "?")
+
+				// reloj := aux[0]
+				dominio := aux[1]
+				ip := aux[2]
+
+				formato := dominio + " IN A " + ip
+				_, err = fmt.Fprintln(file, formato)
+				if isError(err) {
+					return
+				}
+
+				input, err := ioutil.ReadFile(path)
+				if err != nil {
+					fmt.Println(err)
+					os.Exit(1)
+				}
+				relojAntiguo := readFileReloj(path)
+				// fmt.Println("reloj", relojAntiguo)
+				reloj_aux := strings.Split(relojAntiguo, ",")
+				i, err := strconv.Atoi(reloj_aux[0])
+				if isError(err) {
+					return
+				}
+				i += 1
+				s := strconv.Itoa(i)
+				relojNuevo := s + "," + reloj_aux[1] + "," + reloj_aux[2]
+				output2 := bytes.Replace(input, []byte(relojAntiguo), []byte(relojNuevo), -1)
+
+				if err = ioutil.WriteFile(path, output2, 0666); err != nil {
+					fmt.Println(err)
+					os.Exit(1)
+				}
+			}
+
+		} else if comando == "Update" {
+
+			input, err := ioutil.ReadFile(path)
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+
+			relojAntiguo := readFileReloj(path)
+			// fmt.Println("reloj", relojAntiguo)
+			reloj_aux := strings.Split(relojAntiguo, ",")
+			i, err := strconv.Atoi(reloj_aux[0])
+			if isError(err) {
+				return
+			}
+			i += 1
+			s := strconv.Itoa(i)
+			relojNuevo := s + "," + reloj_aux[1] + "," + reloj_aux[2]
+
+			aux := strings.Split(data, "?")
+
+			// dominio := aux[0]
+			valorAntiguo := aux[1]
+			valorNuevo := aux[2]
+
+			output := bytes.Replace(input, []byte(valorAntiguo), []byte(valorNuevo), -1)
+
+			if err = ioutil.WriteFile(path, output, 0666); err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+
+			output2 := bytes.Replace(input, []byte(relojAntiguo), []byte(relojNuevo), -1)
+
+			if err = ioutil.WriteFile(path, output2, 0666); err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+		}
+	} else {
+
+		// _, err = file.WriteString("World \n")
+		// if isError(err) {
+		// 	return
+		// }
+	}
+
+	// Save file changes.
+	err = file.Sync()
+	if isError(err) {
+		return
+	}
+
+	fmt.Println("File Updated Successfully.")
+}
+
+func readFileReloj(path string) string {
+	file, err := os.Open(path)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		reloj := scanner.Text()
+		return reloj
+	}
+
+	if err := scanner.Err(); err != nil {
+		log.Fatal(err)
+	}
+	return ""
+}
+
+func isError(err error) bool {
+	if err != nil {
+		fmt.Println("--------")
+		fmt.Println("Error", err.Error())
+	}
+
+	return (err != nil)
 }
 
 func ServerA() { //servidor para admin

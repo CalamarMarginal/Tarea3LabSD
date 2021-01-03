@@ -1,0 +1,4 @@
+4,0,0
+googles2.com IN A 10.10.9.3
+google.com IN A 10.10.10.10
+google.com IN A 12.12.12.12
