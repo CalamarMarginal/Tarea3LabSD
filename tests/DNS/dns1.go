@@ -60,7 +60,7 @@ func (*serverAdmin) AdminDNSComm(ctx context.Context, req *adminDNSpb.CommandAdm
 		deleteDomain(req.NombreDominio, req.TipoComm)
 	}
 
-	ack := "escuche tu comando"
+	ack := "Comando recibido"
 	res := &adminDNSpb.DnsResponse{
 		Ack: ack,
 	}
@@ -192,14 +192,14 @@ func writeFile(path string, comando string, archivo string, data string) {
 
 				relojAntiguo := readFileReloj(path)
 				// fmt.Println("reloj", relojAntiguo)
-				reloj_aux := strings.Split(relojAntiguo, ",")
-				i, err := strconv.Atoi(reloj_aux[0])
+				relojAux := strings.Split(relojAntiguo, ",")
+				i, err := strconv.Atoi(relojAux[0])
 				if isError(err) {
 					return
 				}
-				i += 1
+				i++
 				s := strconv.Itoa(i)
-				relojNuevo := s + "," + reloj_aux[1] + "," + reloj_aux[2]
+				relojNuevo := s + "," + relojAux[1] + "," + relojAux[2]
 				updateFile(path, relojAntiguo, relojNuevo)
 
 				aux = strings.Split(dominio, ".")
@@ -220,14 +220,14 @@ func writeFile(path string, comando string, archivo string, data string) {
 		} else if comando == "Update" {
 			//--------------Reloj--------------
 			relojAntiguo := readFileReloj(path)
-			reloj_aux := strings.Split(relojAntiguo, ",")
-			i, err := strconv.Atoi(reloj_aux[0])
+			relojAux := strings.Split(relojAntiguo, ",")
+			i, err := strconv.Atoi(relojAux[0])
 			if isError(err) {
 				return
 			}
-			i += 1
+			i++
 			s := strconv.Itoa(i)
-			relojNuevo := s + "," + reloj_aux[1] + "," + reloj_aux[2]
+			relojNuevo := s + "," + relojAux[1] + "," + relojAux[2]
 			updateFile(path, relojAntiguo, relojNuevo)
 
 			aux := strings.Split(data, "?")
@@ -275,26 +275,27 @@ func writeFile(path string, comando string, archivo string, data string) {
 
 			relojAntiguo := readFileReloj(path)
 			// fmt.Println("reloj", relojAntiguo)
-			reloj_aux := strings.Split(relojAntiguo, ",")
-			i, err := strconv.Atoi(reloj_aux[0])
+			relojAux := strings.Split(relojAntiguo, ",")
+			i, err := strconv.Atoi(relojAux[0])
 			if isError(err) {
 				return
 			}
-			i += 1
+			i++
 			s := strconv.Itoa(i)
-			relojNuevo := s + "," + reloj_aux[1] + "," + reloj_aux[2]
+			relojNuevo := s + "," + relojAux[1] + "," + relojAux[2]
 			aux := readFile(path, data) //obtenemos el termino que necesitamos reemplazar por una linea en blanco
-			terminos_aux := strings.Split(aux, " ")
-			dominio := terminos_aux[0]
-			In := terminos_aux[1]
-			A := terminos_aux[2]
-			Ip := terminos_aux[3]
-			replace := " "
+			terminosAux := strings.Split(aux, " ")
+			dominio := terminosAux[0]
+			//In := terminosAux[1]
+			//A := terminosAux[2]
+			//Ipe := terminosAux[3]
+			//replace := " "
 
-			updateFile(path, dominio, replace)
+			/*updateFile(path, dominio, replace)
 			updateFile(path, In, replace)
 			updateFile(path, A, replace)
-			updateFile(path, Ip, replace)
+			updateFile(path, Ipe, replace)*/
+			deleteLine(path, dominio)
 			updateFile(path, relojAntiguo, relojNuevo)
 
 			help := strings.Split(dominio, ".")
@@ -312,6 +313,26 @@ func writeFile(path string, comando string, archivo string, data string) {
 	// Save file changes.
 
 	fmt.Println("File Updated Successfully.")
+}
+
+func deleteLine(ruta string, name string) {
+	input, err := ioutil.ReadFile(ruta)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	lines := strings.Split(string(input), "\n")
+
+	for i, line := range lines {
+		if strings.Contains(line, name) {
+			lines[i] = " "
+		}
+	}
+	output := strings.Join(lines, "\n")
+	err = ioutil.WriteFile(ruta, []byte(output), 0644)
+	if err != nil {
+		log.Fatalln(err)
+	}
 }
 
 func writeLog(path string, text string) {
