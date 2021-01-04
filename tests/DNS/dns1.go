@@ -432,7 +432,7 @@ func ServerA() { //servidor para admin
 	lis, err := net.Listen("tcp", ipDNS1) //este puerto usa el admin para conectarse
 
 	if err != nil {
-		log.Fatalf("Failed to listen %v", err)
+		log.Printf("Failed to listen %v", err)
 	}
 
 	//asignar servidor de grpc a s
@@ -443,7 +443,7 @@ func ServerA() { //servidor para admin
 	adminDNSpb.RegisterAdminDNSServiceServer(s, &serverAdmin{})
 
 	if err := s.Serve(lis); err != nil {
-		log.Fatalf("Failed to serve %v", err)
+		log.Printf("Failed to serve %v", err)
 	}
 }
 
@@ -453,7 +453,7 @@ func ServerB() { //servidor para broker
 	lis, err := net.Listen("tcp", ipDNS1Broker) //este puerto usa el broker para conectarse
 
 	if err != nil {
-		log.Fatalf("Failed to listen %v", err)
+		log.Printf("Failed to listen %v", err)
 	}
 
 	//asignar servidor de grpc a s
@@ -464,7 +464,7 @@ func ServerB() { //servidor para broker
 	brokerDNSpb.RegisterBrokerDNSServiceServer(s, &serverBroker{})
 
 	if err := s.Serve(lis); err != nil {
-		log.Fatalf("Failed to serve %v", err)
+		log.Printf("Failed to serve %v", err)
 	}
 }
 
@@ -477,7 +477,7 @@ func clientDNS2(wg *sync.WaitGroup) {
 	cc, err := grpc.Dial(ipDNS1DNS2, grpc.WithInsecure())
 
 	if err != nil {
-		log.Fatalf("Failed to connect %v", err)
+		log.Printf("Failed to connect")
 	}
 
 	//se ejecuta al final del ciclo de vida de la funcion
@@ -487,6 +487,7 @@ func clientDNS2(wg *sync.WaitGroup) {
 	clientDNS1DNS2(c)
 
 	defer wg.Done()
+
 	return
 }
 
@@ -499,10 +500,10 @@ func clientDNS1DNS2(c clientDNSpb.ClientDNSServiceClient) {
 	res, err := c.ClientDNS(context.Background(), req)
 
 	if err != nil {
-		log.Fatalf("Error, calling Hello RPC: \n%v", err)
+		log.Printf("Error, calling DNS2: \n")
 	}
 
-	log.Printf("Responde Hello: %v", res)
+	log.Printf("DNS2 Responde: %v", res)
 
 	return
 
@@ -517,15 +518,15 @@ func clientDNS2confirmation(wg *sync.WaitGroup) {
 	cc, err := grpc.Dial(ipDNS1DNS2, grpc.WithInsecure())
 
 	if err != nil {
-		log.Fatalf("Failed to connect %v", err)
+		log.Printf("Failed to connect")
 	}
-
-	//se ejecuta al final del ciclo de vida de la funcion
-	defer cc.Close()
 
 	c := clientDNSpb.NewClientDNSServiceClient(cc)
 	clientDNS1DNS2Confirmation(c)
 	defer wg.Done()
+
+	//se ejecuta al final del ciclo de vida de la funcion
+	defer cc.Close()
 	return
 }
 
@@ -539,10 +540,90 @@ func clientDNS1DNS2Confirmation(c clientDNSpb.ClientDNSServiceClient) {
 	res, err := c.ClientDNSConfirmation(context.Background(), req)
 
 	if err != nil {
-		log.Fatalf("Error, calling Hello RPC: \n%v", err)
+		log.Printf("Error calling DNS2 : \n")
 	}
 
-	log.Printf("Responde Hello: %v", res)
+	log.Printf("DNS2 responde: %v", res)
+
+	return
+}
+
+func clientDNS3(wg *sync.WaitGroup) {
+	fmt.Println("Go clientDNS3 is running")
+
+	//se invoca el localhost con grpc
+	//sacamos el Tlc para simplificar la conexion por certificados y seguridades
+	//no conectamos al servicio en el localhost en el puerto 50052
+	cc, err := grpc.Dial(ipDNS1DNS3, grpc.WithInsecure())
+
+	if err != nil {
+		log.Printf("Failed to connect")
+	}
+
+	//se ejecuta al final del ciclo de vida de la funcion
+	defer cc.Close()
+
+	c := clientDNSpb.NewClientDNSServiceClient(cc)
+	clientDNS1DNS3(c)
+
+	defer wg.Done()
+
+	return
+}
+
+func clientDNS1DNS3(c clientDNSpb.ClientDNSServiceClient) {
+	//se crea un request basada en una estructura del protocol buffer
+	req := &clientDNSpb.ClienteDNSRequest{
+		TimeComplete: "timerListo",
+	}
+
+	res, err := c.ClientDNS(context.Background(), req)
+
+	if err != nil {
+		log.Printf("Error, calling DNS3: \n")
+	}
+
+	log.Printf("DNS3 Responde: %v", res)
+
+	return
+
+}
+
+func clientDNS3confirmation(wg *sync.WaitGroup) {
+	fmt.Println("Go clientDNS3 is running")
+
+	//se invoca el localhost con grpc
+	//sacamos el Tlc para simplificar la conexion por certificados y seguridades
+	//no conectamos al servicio en el localhost en el puerto 50052
+	cc, err := grpc.Dial(ipDNS1DNS3, grpc.WithInsecure())
+
+	if err != nil {
+		log.Printf("Failed to connect")
+	}
+
+	c := clientDNSpb.NewClientDNSServiceClient(cc)
+	clientDNS1DNS3Confirmation(c)
+	defer wg.Done()
+
+	//se ejecuta al final del ciclo de vida de la funcion
+	defer cc.Close()
+	return
+}
+
+func clientDNS1DNS3Confirmation(c clientDNSpb.ClientDNSServiceClient) {
+	//se crea un request basada en una estructura del protocol buffer
+	req := &clientDNSpb.ClientDNSRequestConfirmation{
+		Log: "log",
+		Zf:  "zf",
+	}
+
+	res, err := c.ClientDNSConfirmation(context.Background(), req)
+
+	if err != nil {
+		log.Printf("Error calling DNS3 : \n")
+	}
+
+	log.Printf("DNS3 responde: %v", res)
 
 	return
 }
@@ -558,14 +639,16 @@ func main() {
 	go func() {
 		for {
 			var wg2 sync.WaitGroup
-			wg2.Add(2)
+			wg2.Add(4)
 
 			timer2 := time.NewTimer(10 * time.Second)
 			<-timer2.C
 			// go clientDNS3()
 			go clientDNS2(&wg2)
 			go clientDNS2confirmation(&wg2)
-			fmt.Println("Timer 2 fired")
+			go clientDNS3(&wg2)
+			go clientDNS3confirmation(&wg2)
+			fmt.Println("10 segundos transcurridos")
 			wg2.Wait()
 		}
 	}()

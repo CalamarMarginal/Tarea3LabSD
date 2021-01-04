@@ -132,7 +132,7 @@ func ServerB() { //servidor para broker
 
 func ServerDNS1() {
 
-	fmt.Println("DNS2&DNS! server is running")
+	fmt.Println("DNS2&DNS1 server is running")
 
 	lis, err := net.Listen("tcp", ipDNS1DNS2) //este puerto usa el broker para conectarse
 
