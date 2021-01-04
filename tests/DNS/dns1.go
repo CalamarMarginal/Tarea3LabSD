@@ -57,7 +57,7 @@ func (*serverAdmin) AdminDNSComm(ctx context.Context, req *adminDNSpb.CommandAdm
 		updateDomain(req.NombreDominio, req.TipoCambio, req.ParamNuevo, req.TipoComm)
 	} else if req.TipoComm == "Delete" {
 		//delete
-		deleteDomain(req.TipoComm, req.NombreDominio)
+		deleteDomain(req.NombreDominio, req.TipoComm)
 	}
 
 	ack := "escuche tu comando"
@@ -80,24 +80,26 @@ func (*serverBroker) BrokerDNSComm(ctx context.Context, req *brokerDNSpb.Cliente
 
 func createDomain(dominio string, ip string, comando string) {
 	reloj := "1,0,0"
-	path := "./ZF/" + dominio + ".txt"
+	aux := strings.Split(dominio, ".")
+	extension := aux[1]
+	extensionFinal := "." + extension
+	path := "./ZFDNS1/" + extensionFinal + ".txt"
 	createFile(path)
+	pathLog := "./LogDNS1/" + extensionFinal + ".txt"
+	createFile(pathLog)
 	data := reloj + "?" + dominio + "?" + ip
 	writeFile(path, comando, "ZF", data)
 
 }
 
 func updateDomain(dominio string, tipoCambio string, parametroNuevo string, comando string) {
-	path := "./ZF/" + dominio + ".txt"
+	aux := strings.Split(dominio, ".")
+	extension := aux[1]
+	extensionFinal := "." + extension
+	path := "./ZFDNS1/" + extensionFinal + ".txt"
 	data := dominio + "?" + tipoCambio + "?" + parametroNuevo
 	writeFile(path, comando, "ZF", data)
 
-}
-
-func deleteDomain(dominio string, comando string) {
-	path := "./ZF/" + dominio + ".txt"
-	data := ""
-	writeFile(path, comando, "ZF", data)
 }
 
 func createFile(path string) {
@@ -117,6 +119,16 @@ func createFile(path string) {
 	}
 
 }
+
+func deleteDomain(dominio string, comando string) {
+	aux := strings.Split(dominio, ".")
+	extension := aux[1]
+	extensionFinal := "." + extension
+	path := "./ZFDNS1/" + extensionFinal + ".txt"
+	data := dominio
+	writeFile(path, comando, "ZF", data)
+}
+
 func writeFile(path string, comando string, archivo string, data string) {
 
 	// Open file using READ & WRITE permission.
@@ -127,7 +139,7 @@ func writeFile(path string, comando string, archivo string, data string) {
 	defer file.Close()
 
 	fmt.Println("path", path)
-	fmt.Println("archivo)", archivo)
+	fmt.Println("archivo", archivo)
 	fmt.Println("data", data)
 
 	if archivo == "ZF" {
@@ -135,8 +147,6 @@ func writeFile(path string, comando string, archivo string, data string) {
 		if comando == "Create" {
 
 			if auxiliar == 1 {
-
-				fmt.Println("entre a zf")
 				aux := strings.Split(data, "?")
 
 				reloj := aux[0]
@@ -144,10 +154,6 @@ func writeFile(path string, comando string, archivo string, data string) {
 				ip := aux[2]
 
 				formato := dominio + " IN A " + ip
-
-				fmt.Println("reloj", reloj)
-				fmt.Println("dominio", dominio)
-				fmt.Println("ip", ip)
 
 				_, err = fmt.Fprintln(file, reloj)
 				if isError(err) {
@@ -157,7 +163,20 @@ func writeFile(path string, comando string, archivo string, data string) {
 				if isError(err) {
 					return
 				}
+
+				aux = strings.Split(dominio, ".")
+				extension := aux[1]
+				path2 := "./LogDNS1/." + extension + ".txt"
+				text := "create " + dominio + " " + ip
+
+				writeLog(path2, text)
 				//cuando el archivo no existe
+				auxiliar = 0
+
+				err = file.Sync()
+				if isError(err) {
+					return
+				}
 			} else {
 				aux := strings.Split(data, "?")
 
@@ -171,11 +190,6 @@ func writeFile(path string, comando string, archivo string, data string) {
 					return
 				}
 
-				input, err := ioutil.ReadFile(path)
-				if err != nil {
-					fmt.Println(err)
-					os.Exit(1)
-				}
 				relojAntiguo := readFileReloj(path)
 				// fmt.Println("reloj", relojAntiguo)
 				reloj_aux := strings.Split(relojAntiguo, ",")
@@ -186,24 +200,26 @@ func writeFile(path string, comando string, archivo string, data string) {
 				i += 1
 				s := strconv.Itoa(i)
 				relojNuevo := s + "," + reloj_aux[1] + "," + reloj_aux[2]
-				output2 := bytes.Replace(input, []byte(relojAntiguo), []byte(relojNuevo), -1)
+				updateFile(path, relojAntiguo, relojNuevo)
 
-				if err = ioutil.WriteFile(path, output2, 0666); err != nil {
-					fmt.Println(err)
-					os.Exit(1)
+				aux = strings.Split(dominio, ".")
+				extension := aux[1]
+				path2 := "./LogDNS1/." + extension + ".txt"
+				text := "create " + dominio + " " + ip
+				writeLog(path2, text)
+				//cuando el archivo no existe
+				auxiliar = 0
+
+				err = file.Sync()
+				if isError(err) {
+					return
 				}
+
 			}
 
 		} else if comando == "Update" {
-
-			input, err := ioutil.ReadFile(path)
-			if err != nil {
-				fmt.Println(err)
-				os.Exit(1)
-			}
-
+			//--------------Reloj--------------
 			relojAntiguo := readFileReloj(path)
-			// fmt.Println("reloj", relojAntiguo)
 			reloj_aux := strings.Split(relojAntiguo, ",")
 			i, err := strconv.Atoi(reloj_aux[0])
 			if isError(err) {
@@ -212,32 +228,50 @@ func writeFile(path string, comando string, archivo string, data string) {
 			i += 1
 			s := strconv.Itoa(i)
 			relojNuevo := s + "," + reloj_aux[1] + "," + reloj_aux[2]
+			updateFile(path, relojAntiguo, relojNuevo)
 
 			aux := strings.Split(data, "?")
-
-			// dominio := aux[0]
-			valorAntiguo := aux[1]
+			dominio := aux[0]
+			tipoDeCambio := aux[1]
 			valorNuevo := aux[2]
 
-			output := bytes.Replace(input, []byte(valorAntiguo), []byte(valorNuevo), -1)
+			if tipoDeCambio == "name" {
+				var dominioFinalAntiguo string
+				dominioAntiguo := readFile(path, dominio)
+				AUX := strings.Split(dominioAntiguo, " ")
+				dominioFinalAntiguo = AUX[0]
+				updateFile(path, dominioFinalAntiguo, valorNuevo)
 
-			if err = ioutil.WriteFile(path, output, 0666); err != nil {
-				fmt.Println(err)
-				os.Exit(1)
+				aux = strings.Split(dominioFinalAntiguo, ".")
+				extension := aux[1]
+				path2 := "./LogDNS1/." + extension + ".txt"
+				text := "update " + dominioFinalAntiguo + " " + valorNuevo
+				writeLog(path2, text)
+				err = file.Sync()
+				if isError(err) {
+					return
+				}
+
+			} else if tipoDeCambio == "ip" {
+				fmt.Println("entre a ip")
+				dominioAntiguo := readFile(path, dominio)
+				AUX := strings.Split(dominioAntiguo, " ")
+				ipFinalAntiguo := AUX[3]
+
+				updateFile(path, ipFinalAntiguo, valorNuevo)
+
+				aux = strings.Split(dominio, ".")
+				extension := aux[1]
+				path2 := "./LogDNS1/." + extension + ".txt"
+				text := "update " + dominio + " " + valorNuevo
+				writeLog(path2, text)
+				err = file.Sync()
+				if isError(err) {
+					return
+				}
 			}
 
-			output2 := bytes.Replace(input, []byte(relojAntiguo), []byte(relojNuevo), -1)
-
-			if err = ioutil.WriteFile(path, output2, 0666); err != nil {
-				fmt.Println(err)
-				os.Exit(1)
-			}
 		} else if comando == "Delete" {
-			input, err := ioutil.ReadFile(path)
-			if err != nil {
-				fmt.Println(err)
-				os.Exit(1)
-			}
 
 			relojAntiguo := readFileReloj(path)
 			// fmt.Println("reloj", relojAntiguo)
@@ -249,46 +283,93 @@ func writeFile(path string, comando string, archivo string, data string) {
 			i += 1
 			s := strconv.Itoa(i)
 			relojNuevo := s + "," + reloj_aux[1] + "," + reloj_aux[2]
+			aux := readFile(path, data) //obtenemos el termino que necesitamos reemplazar por una linea en blanco
+			terminos_aux := strings.Split(aux, " ")
+			dominio := terminos_aux[0]
+			In := terminos_aux[1]
+			A := terminos_aux[2]
+			Ip := terminos_aux[3]
+			replace := " "
 
-			aux := strings.Split(data, "?")
+			updateFile(path, dominio, replace)
+			updateFile(path, In, replace)
+			updateFile(path, A, replace)
+			updateFile(path, Ip, replace)
+			updateFile(path, relojAntiguo, relojNuevo)
 
-			// dominio := aux[0]
-			valorAntiguo := aux[1]
-			valorNuevo := aux[2]
-
-			output := bytes.Replace(input, []byte(valorAntiguo), []byte(valorNuevo), -1)
-
-			if err = ioutil.WriteFile(path, output, 0666); err != nil {
-				fmt.Println(err)
-				os.Exit(1)
+			help := strings.Split(dominio, ".")
+			extension := help[1]
+			path2 := "./LogDNS1/." + extension + ".txt"
+			text := "delete " + dominio
+			writeLog(path2, text)
+			err = file.Sync()
+			if isError(err) {
+				return
 			}
-
-			output2 := bytes.Replace(input, []byte(relojAntiguo), []byte(relojNuevo), -1)
-
-			if err = ioutil.WriteFile(path, output2, 0666); err != nil {
-				fmt.Println(err)
-				os.Exit(1)
-			}
-
 		}
-	} else {
-
-		// _, err = file.WriteString("World \n")
-		// if isError(err) {
-		// 	return
-		// }
 	}
 
 	// Save file changes.
-	err = file.Sync()
-	if isError(err) {
-		return
-	}
 
 	fmt.Println("File Updated Successfully.")
 }
 
+func writeLog(path string, text string) {
+
+	var file, err = os.OpenFile(path, os.O_APPEND|os.O_WRONLY, 0644)
+	if isError(err) {
+		return
+	}
+
+	_, err = fmt.Fprintln(file, text)
+	if isError(err) {
+		return
+	}
+
+	err = file.Sync()
+	if isError(err) {
+		return
+	}
+}
+
+func updateFile(path string, terminoAntiguo string, terminoNuevo string) {
+	fmt.Println("Termino antiguo", terminoAntiguo)
+	fmt.Println("termino nuevo", terminoNuevo)
+	input, err2 := ioutil.ReadFile(path)
+	if err2 != nil {
+		fmt.Println(err2)
+		os.Exit(1)
+	}
+
+	output := bytes.Replace(input, []byte(terminoAntiguo), []byte(terminoNuevo), 1)
+
+	if err2 = ioutil.WriteFile(path, output, 0666); err2 != nil {
+		fmt.Println(err2)
+		os.Exit(1)
+	}
+	return
+}
+
 func readFileReloj(path string) string {
+	file, err := os.Open(path)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		reloj := scanner.Text()
+		defer file.Close()
+		return reloj
+	}
+
+	if err := scanner.Err(); err != nil {
+		log.Fatal(err)
+	}
+	return ""
+}
+
+func readFile(path string, termino string) string {
 	file, err := os.Open(path)
 	if err != nil {
 		log.Fatal(err)
@@ -297,8 +378,11 @@ func readFileReloj(path string) string {
 
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
-		reloj := scanner.Text()
-		return reloj
+		dominio := scanner.Text()
+		res := strings.Contains(dominio, termino)
+		if res == true {
+			return dominio
+		}
 	}
 
 	if err := scanner.Err(); err != nil {
