@@ -85,10 +85,6 @@ func clientDns(dominio string) string {
 
 	c := brokerDNSpb.NewBrokerDNSServiceClient(cc)
 
-	//helloUnary(c)
-	//helloServerStreaming(c)
-	//goodbyeClientStreaming(c)
-
 	response := BrokerDns(c, dominio)
 
 	return response
@@ -126,12 +122,12 @@ func redirectToDNS() string {
 		if opciondns == 1 { //redirige a dns1
 			dnsip = ipDNS1
 			return dnsip
-			// } else if opciondns == 2 { //redirige a dns2
-			// 	dnsip = ipDNS2
-			// 	return dnsip
-			// } else if opciondns == 3 { //redirige a dns3
-			// 	dnsip = ipDNS3
-			// 	return dnsip
+		} else if opciondns == 2 { //redirige a dns2
+			dnsip = ipDNS2
+			return dnsip
+		} else if opciondns == 3 { //redirige a dns3
+			dnsip = ipDNS3
+			return dnsip
 		}
 	}
 }
