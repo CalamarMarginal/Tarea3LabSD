@@ -12,9 +12,11 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	adminDNSpb "./adminDNSpb"
 	brokerDNSpb "./brokerDNSpb"
+	clientDNSpb "./clientDNSpb"
 
 	"google.golang.org/grpc"
 )
@@ -27,6 +29,9 @@ const ipDNS3 string = "0.0.0.0:50054"
 const ipDNS1Broker string = "0.0.0.0:50055" //puerto propio
 const ipDNS2Broker string = "0.0.0.0:50056"
 const ipDNS3Broker string = "0.0.0.0:50057"
+
+const ipDNS1DNS2 string = "0.0.0.0:50050"
+const ipDNS1DNS3 string = "0.0.0.0:50051"
 
 var auxiliar int //si el auxiliar es 1 es porque es la primera vez que se crea el archivo
 
@@ -442,6 +447,85 @@ func ServerB() { //servidor para broker
 	}
 }
 
+func clientDNS2(wg *sync.WaitGroup) {
+	fmt.Println("Go clientDNS2 is running")
+
+	//se invoca el localhost con grpc
+	//sacamos el Tlc para simplificar la conexion por certificados y seguridades
+	//no conectamos al servicio en el localhost en el puerto 50052
+	cc, err := grpc.Dial(ipDNS1DNS2, grpc.WithInsecure())
+
+	if err != nil {
+		log.Fatalf("Failed to connect %v", err)
+	}
+
+	//se ejecuta al final del ciclo de vida de la funcion
+	defer cc.Close()
+
+	c := clientDNSpb.NewClientDNSServiceClient(cc)
+	clientDNS1DNS2(c)
+
+	defer wg.Done()
+	return
+}
+
+func clientDNS1DNS2(c clientDNSpb.ClientDNSServiceClient) {
+	//se crea un request basada en una estructura del protocol buffer
+	req := &clientDNSpb.ClienteDNSRequest{
+		TimeComplete: "timerListo",
+	}
+
+	res, err := c.ClientDNS(context.Background(), req)
+
+	if err != nil {
+		log.Fatalf("Error, calling Hello RPC: \n%v", err)
+	}
+
+	log.Printf("Responde Hello: %v", res)
+
+	return
+
+}
+
+func clientDNS2confirmation(wg *sync.WaitGroup) {
+	fmt.Println("Go clientDNS3 is running")
+
+	//se invoca el localhost con grpc
+	//sacamos el Tlc para simplificar la conexion por certificados y seguridades
+	//no conectamos al servicio en el localhost en el puerto 50052
+	cc, err := grpc.Dial(ipDNS1DNS2, grpc.WithInsecure())
+
+	if err != nil {
+		log.Fatalf("Failed to connect %v", err)
+	}
+
+	//se ejecuta al final del ciclo de vida de la funcion
+	defer cc.Close()
+
+	c := clientDNSpb.NewClientDNSServiceClient(cc)
+	clientDNS1DNS2Confirmation(c)
+	defer wg.Done()
+	return
+}
+
+func clientDNS1DNS2Confirmation(c clientDNSpb.ClientDNSServiceClient) {
+	//se crea un request basada en una estructura del protocol buffer
+	req := &clientDNSpb.ClientDNSRequestConfirmation{
+		Log: "log",
+		Zf:  "zf",
+	}
+
+	res, err := c.ClientDNSConfirmation(context.Background(), req)
+
+	if err != nil {
+		log.Fatalf("Error, calling Hello RPC: \n%v", err)
+	}
+
+	log.Printf("Responde Hello: %v", res)
+
+	return
+}
+
 func main() {
 
 	var wg sync.WaitGroup
@@ -450,6 +534,20 @@ func main() {
 	//server de admin y server de broker
 	go ServerA()
 	go ServerB()
+	go func() {
+		for {
+			var wg2 sync.WaitGroup
+			wg2.Add(2)
+
+			timer2 := time.NewTimer(10 * time.Second)
+			<-timer2.C
+			// go clientDNS3()
+			go clientDNS2(&wg2)
+			go clientDNS2confirmation(&wg2)
+			fmt.Println("Timer 2 fired")
+			wg2.Wait()
+		}
+	}()
 	wg.Wait()
 	return
 }

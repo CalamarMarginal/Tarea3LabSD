@@ -9,13 +9,15 @@ import (
 	"google.golang.org/grpc"
 )
 
+const ipBroker string = "0.0.0.0:50058"
+
 func main() {
 	fmt.Println("Go client is running")
 
 	//se invoca el localhost con grpc
 	//sacamos el Tlc para simplificar la conexion por certificados y seguridades
 	//no conectamos al servicio en el localhost en el puerto 50052
-	cc, err := grpc.Dial("0.0.0.0:50058", grpc.WithInsecure())
+	cc, err := grpc.Dial(ipBroker, grpc.WithInsecure())
 
 	if err != nil {
 		log.Fatalf("Failed to connect %v", err)

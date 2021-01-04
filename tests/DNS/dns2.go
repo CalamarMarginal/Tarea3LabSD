@@ -9,6 +9,7 @@ import (
 
 	adminDNSpb "./adminDNSpb"
 	brokerDNSpb "./brokerDNSpb"
+	clientDNSpb "./clientDNSpb"
 
 	"google.golang.org/grpc"
 )
@@ -22,8 +23,12 @@ const ipDNS1Broker string = "0.0.0.0:50055"
 const ipDNS2Broker string = "0.0.0.0:50056" //puerto propio
 const ipDNS3Broker string = "0.0.0.0:50057"
 
+const ipDNS1DNS2 string = "0.0.0.0:50050" //puerto propio
+const ipDNS1DNS3 string = "0.0.0.0:50051"
+
 type serverAdmin struct{}
 type serverBroker struct{}
+type serverDNS struct{}
 
 /*
 func ping(ip string) bool {
@@ -56,6 +61,30 @@ func (*serverBroker) BrokerDNSComm(ctx context.Context, req *brokerDNSpb.Cliente
 		IpDominio: ack,
 		Reloj:     reloj,
 	}
+	return res, nil
+}
+
+func (*serverDNS) ClientDNS(ctx context.Context, req *clientDNSpb.ClienteDNSRequest) (*clientDNSpb.ClientDNSResponse, error) {
+	//da igual que comando sea, el broker solo responde con la ip de una dns
+	fmt.Println("Timer:", req.TimeComplete)
+
+	res := &clientDNSpb.ClientDNSResponse{
+		Log:   "Log",
+		Reloj: "reloj",
+	}
+
+	return res, nil
+
+}
+
+func (*serverDNS) ClientDNSConfirmation(ctx context.Context, req *clientDNSpb.ClientDNSRequestConfirmation) (*clientDNSpb.ClientDNSResponseConfirmation, error) {
+	fmt.Println("Timer:", req.Log)
+	fmt.Println("Timer:", req.Zf)
+
+	res := &clientDNSpb.ClientDNSResponseConfirmation{
+		Ack: "ack",
+	}
+
 	return res, nil
 }
 
@@ -101,6 +130,28 @@ func ServerB() { //servidor para broker
 	}
 }
 
+func ServerDNS1() {
+
+	fmt.Println("DNS2&DNS! server is running")
+
+	lis, err := net.Listen("tcp", ipDNS1DNS2) //este puerto usa el broker para conectarse
+
+	if err != nil {
+		log.Fatalf("Failed to listen %v", err)
+	}
+
+	//asignar servidor de grpc a s
+	s := grpc.NewServer()
+
+	//se utiliza el archivo que se genera por el protocol buffer y utilizaremos el metodo Register y el nombre del servicio
+	// le pasasomos el servidor de grpc (s) y la estructura de un servidor "server"
+	clientDNSpb.RegisterClientDNSServiceServer(s, &serverDNS{})
+
+	if err := s.Serve(lis); err != nil {
+		log.Fatalf("Failed to serve %v", err)
+	}
+}
+
 func main() {
 
 	var wg sync.WaitGroup
@@ -109,6 +160,7 @@ func main() {
 	//server de admin y server de broker
 	go ServerA()
 	go ServerB()
+	go ServerDNS1()
 	wg.Wait()
 	return
 }
