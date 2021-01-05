@@ -50,7 +50,7 @@ func BrokerDns(c brokerDNSpb.BrokerDNSServiceClient, dominio string) string {
 	res, err := c.BrokerDNSComm(context.Background(), req)
 
 	if err != nil {
-		log.Fatalf("Error calling BrokerDNSComm RPC: \n%v", err)
+		log.Printf("Error calling BrokerDNSComm RPC: \n%v", err)
 	}
 
 	ipDominio := res.GetIpDominio()
@@ -79,7 +79,7 @@ func clientDns(dominio string) string {
 	cc, err := grpc.Dial(ipDns, grpc.WithInsecure())
 
 	if err != nil {
-		log.Fatalf("Failed to connect %v", err)
+		log.Printf("Failed to connect %v", err)
 	}
 
 	//se ejecuta al final del ciclo de vida de la funcion
@@ -171,7 +171,7 @@ func ServerA() { //servidor para admin
 	lis, err := net.Listen("tcp", ipAdmin)
 
 	if err != nil {
-		log.Fatalf("Failed to listen %v", err)
+		log.Printf("Failed to listen %v", err)
 	}
 
 	//asignar servidor de grpc a s
@@ -182,7 +182,7 @@ func ServerA() { //servidor para admin
 	adminBrokerpb.RegisterAdminBrokerServiceServer(s, &serverA{})
 
 	if err := s.Serve(lis); err != nil {
-		log.Fatalf("Failed to serve %v", err)
+		log.Printf("Failed to serve %v", err)
 	}
 }
 
@@ -192,7 +192,7 @@ func ServerC() {
 	lis, err := net.Listen("tcp", ipClient)
 
 	if err != nil {
-		log.Fatalf("Failed to listen %v", err)
+		log.Printf("Failed to listen %v", err)
 	}
 
 	//asignar servidor de grpc a s
@@ -203,7 +203,7 @@ func ServerC() {
 	clientBrokerpb.RegisterClienteBrokerServiceServer(s, &serverC{})
 
 	if err := s.Serve(lis); err != nil {
-		log.Fatalf("Failed to serve %v", err)
+		log.Printf("Failed to serve %v", err)
 	}
 }
 

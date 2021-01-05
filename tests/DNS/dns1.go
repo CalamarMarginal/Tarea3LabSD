@@ -145,7 +145,7 @@ func writeFile(path string, comando string, archivo string, data string) string 
 	clock := "[]" //valor dummy
 	var file, err = os.OpenFile(path, os.O_APPEND|os.O_WRONLY, 0644)
 	if isError(err) {
-		return ""
+		return "no existe"
 	}
 	defer file.Close()
 
@@ -238,7 +238,7 @@ func writeFile(path string, comando string, archivo string, data string) string 
 			relojAux := strings.Split(relojAntiguo, ",")
 			i, err := strconv.Atoi(relojAux[0])
 			if isError(err) {
-				return ""
+				return "no existe"
 			}
 			i++
 			s := strconv.Itoa(i)
@@ -266,7 +266,7 @@ func writeFile(path string, comando string, archivo string, data string) string 
 				writeLog(path2, text)
 				err = file.Sync()
 				if isError(err) {
-					return ""
+					return "no existe"
 				}
 
 			} else if tipoDeCambio == "ip" {
@@ -284,7 +284,7 @@ func writeFile(path string, comando string, archivo string, data string) string 
 				writeLog(path2, text)
 				err = file.Sync()
 				if isError(err) {
-					return ""
+					return "no existe"
 				}
 			}
 
@@ -295,7 +295,7 @@ func writeFile(path string, comando string, archivo string, data string) string 
 			relojAux := strings.Split(relojAntiguo, ",")
 			i, err := strconv.Atoi(relojAux[0])
 			if isError(err) {
-				return ""
+				return "no existe"
 			}
 			i++
 			s := strconv.Itoa(i)
@@ -316,7 +316,7 @@ func writeFile(path string, comando string, archivo string, data string) string 
 			writeLog(path2, text)
 			err = file.Sync()
 			if isError(err) {
-				return ""
+				return "no existe"
 			}
 		}
 	}
@@ -648,14 +648,14 @@ func main() {
 			var wg2 sync.WaitGroup
 			wg2.Add(4)
 
-			timer2 := time.NewTimer(10 * time.Second)
+			timer2 := time.NewTimer(300 * time.Second)
 			<-timer2.C
 			// go clientDNS3()
 			go clientDNS2(&wg2)
 			go clientDNS2confirmation(&wg2)
 			go clientDNS3(&wg2)
 			go clientDNS3confirmation(&wg2)
-			fmt.Println("10 segundos transcurridos")
+			fmt.Println("300 segundos transcurridos")
 			wg2.Wait()
 		}
 	}()

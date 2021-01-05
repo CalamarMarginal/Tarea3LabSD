@@ -146,7 +146,7 @@ func writeFile(path string, comando string, archivo string, data string) string 
 	clock := "[]" //valor dummy
 	var file, err = os.OpenFile(path, os.O_APPEND|os.O_WRONLY, 0644)
 	if isError(err) {
-		return ""
+		return "no existe"
 	}
 	defer file.Close()
 
@@ -239,7 +239,7 @@ func writeFile(path string, comando string, archivo string, data string) string 
 			relojAux := strings.Split(relojAntiguo, ",")
 			i, err := strconv.Atoi(relojAux[2])
 			if isError(err) {
-				return ""
+				return "no existe"
 			}
 			i++
 			s := strconv.Itoa(i)
@@ -267,7 +267,7 @@ func writeFile(path string, comando string, archivo string, data string) string 
 				writeLog(path2, text)
 				err = file.Sync()
 				if isError(err) {
-					return ""
+					return "no existe"
 				}
 
 			} else if tipoDeCambio == "ip" {
@@ -285,7 +285,7 @@ func writeFile(path string, comando string, archivo string, data string) string 
 				writeLog(path2, text)
 				err = file.Sync()
 				if isError(err) {
-					return ""
+					return "no existe"
 				}
 			}
 
@@ -296,7 +296,7 @@ func writeFile(path string, comando string, archivo string, data string) string 
 			relojAux := strings.Split(relojAntiguo, ",")
 			i, err := strconv.Atoi(relojAux[2])
 			if isError(err) {
-				return ""
+				return "no existe"
 			}
 			i++
 			s := strconv.Itoa(i)
@@ -317,7 +317,7 @@ func writeFile(path string, comando string, archivo string, data string) string 
 			writeLog(path2, text)
 			err = file.Sync()
 			if isError(err) {
-				return ""
+				return "no existe"
 			}
 		}
 	}
@@ -464,7 +464,7 @@ func ServerA() { //servidor para admin
 	lis, err := net.Listen("tcp", ipDNS3) //este puerto usa el admin para conectarse
 
 	if err != nil {
-		log.Fatalf("Failed to listen %v", err)
+		log.Printf("Failed to listen %v", err)
 	}
 
 	//asignar servidor de grpc a s
@@ -475,7 +475,7 @@ func ServerA() { //servidor para admin
 	adminDNSpb.RegisterAdminDNSServiceServer(s, &serverAdmin{})
 
 	if err := s.Serve(lis); err != nil {
-		log.Fatalf("Failed to serve %v", err)
+		log.Printf("Failed to serve %v", err)
 	}
 }
 
@@ -485,7 +485,7 @@ func ServerB() { //servidor para broker
 	lis, err := net.Listen("tcp", ipDNS3Broker) //este puerto usa el broker para conectarse
 
 	if err != nil {
-		log.Fatalf("Failed to listen %v", err)
+		log.Printf("Failed to listen %v", err)
 	}
 
 	//asignar servidor de grpc a s
@@ -496,7 +496,7 @@ func ServerB() { //servidor para broker
 	brokerDNSpb.RegisterBrokerDNSServiceServer(s, &serverBroker{})
 
 	if err := s.Serve(lis); err != nil {
-		log.Fatalf("Failed to serve %v", err)
+		log.Printf("Failed to serve %v", err)
 	}
 }
 
@@ -507,7 +507,7 @@ func ServerDNS1() {
 	lis, err := net.Listen("tcp", ipDNS1DNS3) //este puerto usa el broker para conectarse
 
 	if err != nil {
-		log.Fatalf("Failed to listen %v", err)
+		log.Printf("Failed to listen %v", err)
 	}
 
 	//asignar servidor de grpc a s
@@ -518,7 +518,7 @@ func ServerDNS1() {
 	clientDNSpb.RegisterClientDNSServiceServer(s, &serverDNS{})
 
 	if err := s.Serve(lis); err != nil {
-		log.Fatalf("Failed to serve %v", err)
+		log.Printf("Failed to serve %v", err)
 	}
 }
 

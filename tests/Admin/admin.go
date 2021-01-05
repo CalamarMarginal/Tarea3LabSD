@@ -55,7 +55,7 @@ func sendCmdToBroker(c adminBrokerpb.AdminBrokerServiceClient, comandoInfo strin
 		}
 		res, err := c.AdminBrokerComm(context.Background(), req)
 		if err != nil {
-			log.Fatalf("Error: \n%v", err)
+			log.Printf("Error: \n%v", err)
 		}
 		time.Sleep(1000 * time.Millisecond)
 		log.Printf("Redirigido a: %v", res.IpDNS)
@@ -74,7 +74,7 @@ func sendCmdToBroker(c adminBrokerpb.AdminBrokerServiceClient, comandoInfo strin
 		}
 		res, err := c.AdminBrokerComm(context.Background(), req)
 		if err != nil {
-			log.Fatalf("Error: \n%v", err)
+			log.Printf("Error: \n%v", err)
 		}
 		time.Sleep(1000 * time.Millisecond)
 		log.Printf("Redirigido a: %v", res.IpDNS)
@@ -89,7 +89,7 @@ func sendCmdToBroker(c adminBrokerpb.AdminBrokerServiceClient, comandoInfo strin
 		}
 		res, err := c.AdminBrokerComm(context.Background(), req)
 		if err != nil {
-			log.Fatalf("Error: \n%v", err)
+			log.Printf("Error: \n%v", err)
 		}
 		time.Sleep(1000 * time.Millisecond)
 		log.Printf("Redirigido a: %v", res.IpDNS)
@@ -112,7 +112,7 @@ func sendCmdToDNS(c adminDNSpb.AdminDNSServiceClient, comandoInfo string, comm i
 		}
 		res, err := c.AdminDNSComm(context.Background(), req)
 		if err != nil {
-			log.Fatalf("Error: \n%v", err)
+			log.Printf("Error: \n%v", err)
 		}
 		time.Sleep(1000 * time.Millisecond)
 		log.Printf("DNS dice %v", res.Ack)
@@ -134,7 +134,7 @@ func sendCmdToDNS(c adminDNSpb.AdminDNSServiceClient, comandoInfo string, comm i
 		}
 		res, err := c.AdminDNSComm(context.Background(), req)
 		if err != nil {
-			log.Fatalf("Error: \n%v", err)
+			log.Printf("Error: \n%v", err)
 		}
 		time.Sleep(1000 * time.Millisecond)
 		log.Printf("DNS dice %v", res.Ack)
@@ -152,7 +152,7 @@ func sendCmdToDNS(c adminDNSpb.AdminDNSServiceClient, comandoInfo string, comm i
 		}
 		res, err := c.AdminDNSComm(context.Background(), req)
 		if err != nil {
-			log.Fatalf("Error: \n%v", err)
+			log.Printf("Error: \n%v", err)
 		}
 		time.Sleep(1000 * time.Millisecond)
 		log.Printf("DNS dice %v", res.Ack)
@@ -168,7 +168,7 @@ func connectToDNS(ipConnect string, comando string, tipocom int) {
 	cc, err := grpc.Dial(ipConnect, grpc.WithInsecure())
 
 	if err != nil {
-		log.Fatalf("Failed to connect %v", err)
+		log.Printf("Failed to connect %v", err)
 	} else {
 		fmt.Println("Conectado al DNS:", ipConnect)
 		//se ejecuta al final del ciclo de vida de la funcion
@@ -188,7 +188,7 @@ func main() {
 		cc, err := grpc.Dial(ipBroker, grpc.WithInsecure())
 
 		if err != nil {
-			log.Fatalf("Failed to connect %v", err)
+			log.Printf("Failed to connect %v", err)
 		} else {
 			fmt.Println("Conectado al Broker")
 			//se ejecuta al final del ciclo de vida de la funcion

@@ -20,7 +20,7 @@ func main() {
 	cc, err := grpc.Dial(ipBroker, grpc.WithInsecure())
 
 	if err != nil {
-		log.Fatalf("Failed to connect %v", err)
+		log.Printf("Failed to connect %v", err)
 	}
 
 	//se ejecuta al final del ciclo de vida de la funcion
@@ -67,7 +67,7 @@ func clientBroker(c clientepb.ClienteBrokerServiceClient) {
 			res, err := c.ClienteBroker(context.Background(), req)
 
 			if err != nil {
-				log.Fatalf("Error calling ClientBroker RPC: \n%v", err)
+				log.Printf("Error calling ClientBroker RPC: \n%v", err)
 			}
 
 			ipDominio := res.GetIp()
