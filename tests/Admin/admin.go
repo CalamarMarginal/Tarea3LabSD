@@ -116,10 +116,8 @@ func sendCmdToDNS(c adminDNSpb.AdminDNSServiceClient, comandoInfo string, comm i
 		}
 		time.Sleep(1000 * time.Millisecond)
 		log.Printf("DNS dice %v", res.Ack)
-		aux2 := strings.Split(name, ".")
-		extension := aux2[1]
-		dictDom[extension] = clkIP{reloj: res.Ack, dns: lastDNSVisited}
-		fmt.Println(dictDom[extension])
+		dictDom[name] = clkIP{reloj: res.Ack, dns: lastDNSVisited}
+		fmt.Println(dictDom[name])
 	} else if comm == 2 { //update
 		ncom := "Update"
 		aux := strings.Split(comandoInfo, " ")
@@ -138,10 +136,8 @@ func sendCmdToDNS(c adminDNSpb.AdminDNSServiceClient, comandoInfo string, comm i
 		}
 		time.Sleep(1000 * time.Millisecond)
 		log.Printf("DNS dice %v", res.Ack)
-		aux2 := strings.Split(name, ".")
-		extension := aux2[1]
-		dictDom[extension] = clkIP{reloj: res.Ack, dns: lastDNSVisited}
-		fmt.Println(dictDom[extension])
+		dictDom[name] = clkIP{reloj: res.Ack, dns: lastDNSVisited}
+		fmt.Println(dictDom[name])
 	} else { //delete
 		ncom := "Delete"
 		req := &adminDNSpb.CommandAdminDNS{
@@ -156,10 +152,8 @@ func sendCmdToDNS(c adminDNSpb.AdminDNSServiceClient, comandoInfo string, comm i
 		}
 		time.Sleep(1000 * time.Millisecond)
 		log.Printf("DNS dice %v", res.Ack)
-		aux2 := strings.Split(comandoInfo, ".")
-		extension := aux2[1]
-		dictDom[extension] = clkIP{reloj: res.Ack, dns: lastDNSVisited}
-		fmt.Println(dictDom[extension])
+		dictDom[comandoInfo] = clkIP{reloj: res.Ack, dns: lastDNSVisited}
+		fmt.Println(dictDom[comandoInfo])
 	}
 
 }
