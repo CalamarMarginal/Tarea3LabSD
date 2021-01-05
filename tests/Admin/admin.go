@@ -19,12 +19,15 @@ const ipBroker string = "0.0.0.0:50059"
 
 var lastDNSVisited string
 
+var needRedirect int //si es 1, el broker nos redirige por conflicto
+
+/*
 type clkIP struct {
 	reloj string
 	dns   string
-}
+}*/
 
-var dictDom = map[string]clkIP{}
+var dictDom = map[string]string{}
 
 func opcionComando() int {
 	var opcion int
@@ -116,7 +119,8 @@ func sendCmdToDNS(c adminDNSpb.AdminDNSServiceClient, comandoInfo string, comm i
 		}
 		time.Sleep(1000 * time.Millisecond)
 		log.Printf("DNS dice %v", res.Ack)
-		dictDom[name] = clkIP{reloj: res.Ack, dns: lastDNSVisited}
+		vaux := res.Ack + "?" + lastDNSVisited
+		dictDom[name] = vaux
 		fmt.Println(dictDom[name])
 	} else if comm == 2 { //update
 		ncom := "Update"
@@ -136,7 +140,16 @@ func sendCmdToDNS(c adminDNSpb.AdminDNSServiceClient, comandoInfo string, comm i
 		}
 		time.Sleep(1000 * time.Millisecond)
 		log.Printf("DNS dice %v", res.Ack)
-		dictDom[name] = clkIP{reloj: res.Ack, dns: lastDNSVisited}
+		/*
+			if res.Ack == "Archivo no existe" || res.Ack == "Dominio no existe"{
+				value, ok := dictDom[name]
+				if ok == true{
+					fmt.Println()
+
+				}
+			}*/
+		vaux := res.Ack + "?" + lastDNSVisited
+		dictDom[name] = vaux
 		fmt.Println(dictDom[name])
 	} else { //delete
 		ncom := "Delete"
@@ -152,7 +165,8 @@ func sendCmdToDNS(c adminDNSpb.AdminDNSServiceClient, comandoInfo string, comm i
 		}
 		time.Sleep(1000 * time.Millisecond)
 		log.Printf("DNS dice %v", res.Ack)
-		dictDom[comandoInfo] = clkIP{reloj: res.Ack, dns: lastDNSVisited}
+		vaux := res.Ack + "?" + lastDNSVisited
+		dictDom[comandoInfo] = vaux
 		fmt.Println(dictDom[comandoInfo])
 	}
 
@@ -176,6 +190,8 @@ func connectToDNS(ipConnect string, comando string, tipocom int) {
 }
 
 func main() {
+
+	needRedirect = 0
 
 	for {
 
