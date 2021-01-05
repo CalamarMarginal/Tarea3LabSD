@@ -145,7 +145,7 @@ func writeFile(path string, comando string, archivo string, data string) string 
 	clock := "[]" //valor dummy
 	var file, err = os.OpenFile(path, os.O_APPEND|os.O_WRONLY, 0644)
 	if isError(err) {
-		return "Archivo no existe"
+		return "Dominio no existe"
 	}
 	defer file.Close()
 

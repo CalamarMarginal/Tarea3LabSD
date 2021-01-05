@@ -19,13 +19,7 @@ const ipBroker string = "0.0.0.0:50059"
 
 var lastDNSVisited string
 
-var needRedirect int //si es 1, el broker nos redirige por conflicto
-
-/*
-type clkIP struct {
-	reloj string
-	dns   string
-}*/
+var contRedirect int //anti loops recursivos
 
 var dictDom = map[string]string{}
 
@@ -101,6 +95,12 @@ func sendCmdToBroker(c adminBrokerpb.AdminBrokerServiceClient, comandoInfo strin
 }
 
 func sendCmdToDNS(c adminDNSpb.AdminDNSServiceClient, comandoInfo string, comm int) {
+	contRedirect++
+	if contRedirect > 2 {
+		fmt.Println("No existe")
+		contRedirect = 0
+		return
+	}
 
 	if comm == 1 { //create
 		ncom := "Create"
@@ -140,15 +140,22 @@ func sendCmdToDNS(c adminDNSpb.AdminDNSServiceClient, comandoInfo string, comm i
 		}
 		time.Sleep(1000 * time.Millisecond)
 		log.Printf("DNS dice %v", res.Ack)
-		/*
-			if res.Ack == "Archivo no existe" || res.Ack == "Dominio no existe"{
-				value, ok := dictDom[name]
-				if ok == true{
-					fmt.Println()
 
-				}
-			}*/
-		vaux := res.Ack + "?" + lastDNSVisited
+		if res.Ack == "Dominio no existe" {
+			_, ok := dictDom[name]
+			fmt.Println("Buscando DNS actualizado")
+			aux4 := strings.Split(dictDom[name], "?")
+			if ok == true { //existe en el diccionario
+				fmt.Println("Redirigiendo a ", aux4[1], "...")
+				connectToDNS(aux4[1], comandoInfo, comm)
+				return
+			}
+			fmt.Println("El dominio no se ha registrado")
+			return
+
+		}
+
+		vaux := res.Ack + "?" + lastDNSVisited //reloj + dns
 		dictDom[name] = vaux
 		fmt.Println(dictDom[name])
 	} else { //delete
@@ -165,9 +172,21 @@ func sendCmdToDNS(c adminDNSpb.AdminDNSServiceClient, comandoInfo string, comm i
 		}
 		time.Sleep(1000 * time.Millisecond)
 		log.Printf("DNS dice %v", res.Ack)
-		vaux := res.Ack + "?" + lastDNSVisited
-		dictDom[comandoInfo] = vaux
-		fmt.Println(dictDom[comandoInfo])
+
+		if res.Ack == "Dominio no existe" {
+			_, ok := dictDom[comandoInfo]
+			fmt.Println("Buscando DNS actualizado")
+			aux4 := strings.Split(dictDom[comandoInfo], "?")
+			if ok == true { //existe en el diccionario
+				fmt.Println("Redirigiendo a ", aux4[1], "...")
+				connectToDNS(aux4[1], comandoInfo, comm)
+				return
+			}
+			fmt.Println("El dominio no se ha registrado")
+			return
+
+		}
+
 	}
 
 }
@@ -191,7 +210,7 @@ func connectToDNS(ipConnect string, comando string, tipocom int) {
 
 func main() {
 
-	needRedirect = 0
+	contRedirect = 0
 
 	for {
 
