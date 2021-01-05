@@ -76,9 +76,11 @@ func (*serverBroker) BrokerDNSComm(ctx context.Context, req *brokerDNSpb.Cliente
 	fmt.Println("Request recibido:", req.CommCliente)
 	ack := "tu pagina esta en 10.11.12.13"
 	reloj := "0.0.0"
+	ipDNSpropia := ipDNS2Broker
 	res := &brokerDNSpb.DnsClientResponse{
 		IpDominio: ack,
 		Reloj:     reloj,
+		IpDNS:     ipDNSpropia,
 	}
 	return res, nil
 }

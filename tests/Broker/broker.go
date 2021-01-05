@@ -55,11 +55,13 @@ func BrokerDns(c brokerDNSpb.BrokerDNSServiceClient, dominio string) string {
 
 	ipDominio := res.GetIpDominio()
 	reloj := res.GetReloj()
+	ipDNS := res.GetIpDNS()
 
 	fmt.Println("la ip es ", ipDominio)
 	fmt.Println("el reloj es ", reloj)
+	fmt.Println("el ipDNS es ", ipDNS)
 
-	response := ipDominio + "?" + reloj
+	response := ipDominio + "?" + reloj + "?" + ipDNS
 
 	return response
 
@@ -104,9 +106,12 @@ func (*serverC) ClienteBroker(ctx context.Context, req *clientBrokerpb.ClienteRe
 
 	ip := split[0]
 	reloj := split[1]
+	ipDNS := split[2]
+
 	res := &clientBrokerpb.BrokerResponse{
 		Ip:    ip,
 		Reloj: reloj,
+		IpDNS: ipDNS,
 	}
 	return res, nil
 

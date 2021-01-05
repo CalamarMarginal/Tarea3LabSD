@@ -72,9 +72,11 @@ func clientBroker(c clientepb.ClienteBrokerServiceClient) {
 
 			ipDominio := res.GetIp()
 			reloj := res.GetReloj()
+			ipDNS := res.GetIpDNS()
 
 			fmt.Println("La ip es ", ipDominio)
 			fmt.Println("La reloj es ", reloj)
+			fmt.Println("La ipDNS es ", ipDNS)
 
 		} else {
 			break
