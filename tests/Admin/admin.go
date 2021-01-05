@@ -17,6 +17,15 @@ import (
 
 const ipBroker string = "0.0.0.0:50059"
 
+var lastDNSVisited string
+
+type clkIP struct {
+	reloj string
+	dns   string
+}
+
+var dictDom = map[string]clkIP{}
+
 func opcionComando() int {
 	var opcion int
 	for {
@@ -107,7 +116,10 @@ func sendCmdToDNS(c adminDNSpb.AdminDNSServiceClient, comandoInfo string, comm i
 		}
 		time.Sleep(1000 * time.Millisecond)
 		log.Printf("DNS dice %v", res.Ack)
-
+		aux2 := strings.Split(name, ".")
+		extension := aux2[1]
+		dictDom[extension] = clkIP{reloj: res.Ack, dns: lastDNSVisited}
+		fmt.Println(dictDom[extension])
 	} else if comm == 2 { //update
 		ncom := "Update"
 		aux := strings.Split(comandoInfo, " ")
@@ -126,6 +138,10 @@ func sendCmdToDNS(c adminDNSpb.AdminDNSServiceClient, comandoInfo string, comm i
 		}
 		time.Sleep(1000 * time.Millisecond)
 		log.Printf("DNS dice %v", res.Ack)
+		aux2 := strings.Split(name, ".")
+		extension := aux2[1]
+		dictDom[extension] = clkIP{reloj: res.Ack, dns: lastDNSVisited}
+		fmt.Println(dictDom[extension])
 	} else { //delete
 		ncom := "Delete"
 		req := &adminDNSpb.CommandAdminDNS{
@@ -140,6 +156,10 @@ func sendCmdToDNS(c adminDNSpb.AdminDNSServiceClient, comandoInfo string, comm i
 		}
 		time.Sleep(1000 * time.Millisecond)
 		log.Printf("DNS dice %v", res.Ack)
+		aux2 := strings.Split(comandoInfo, ".")
+		extension := aux2[1]
+		dictDom[extension] = clkIP{reloj: res.Ack, dns: lastDNSVisited}
+		fmt.Println(dictDom[extension])
 	}
 
 }
@@ -155,6 +175,8 @@ func connectToDNS(ipConnect string, comando string, tipocom int) {
 		defer cc.Close()
 	}
 	c := adminDNSpb.NewAdminDNSServiceClient(cc)
+
+	lastDNSVisited = ipConnect
 
 	sendCmdToDNS(c, comando, tipocom)
 }

@@ -50,24 +50,25 @@ func ping(ip string) bool {
 
 func (*serverAdmin) AdminDNSComm(ctx context.Context, req *adminDNSpb.CommandAdminDNS) (*adminDNSpb.DnsResponse, error) {
 	//da igual que comando sea, el broker solo responde con la ip de una dns
-	fmt.Println("Tipo comando:", req.TipoComm)
-	fmt.Println("Nombre.Dominio:", req.NombreDominio)
-	fmt.Println("Tipo cambio:", req.TipoCambio)
-	fmt.Println("Parametro nuevo:", req.ParamNuevo)
-
+	reloj := "[]"
+	/*
+		fmt.Println("Tipo comando:", req.TipoComm)
+		fmt.Println("Nombre.Dominio:", req.NombreDominio)
+		fmt.Println("Tipo cambio:", req.TipoCambio)
+		fmt.Println("Parametro nuevo:", req.ParamNuevo)
+	*/
 	if req.TipoComm == "Create" {
 		//create
-		createDomain(req.NombreDominio, req.ParamNuevo, req.TipoComm)
+		reloj = createDomain(req.NombreDominio, req.ParamNuevo, req.TipoComm)
 	} else if req.TipoComm == "Update" {
-		updateDomain(req.NombreDominio, req.TipoCambio, req.ParamNuevo, req.TipoComm)
+		reloj = updateDomain(req.NombreDominio, req.TipoCambio, req.ParamNuevo, req.TipoComm)
 	} else if req.TipoComm == "Delete" {
 		//delete
-		deleteDomain(req.NombreDominio, req.TipoComm)
+		reloj = deleteDomain(req.NombreDominio, req.TipoComm)
 	}
 
-	ack := "Comando recibido"
 	res := &adminDNSpb.DnsResponse{
-		Ack: ack,
+		Ack: reloj,
 	}
 	return res, nil
 }
@@ -85,7 +86,7 @@ func (*serverBroker) BrokerDNSComm(ctx context.Context, req *brokerDNSpb.Cliente
 	return res, nil
 }
 
-func createDomain(dominio string, ip string, comando string) {
+func createDomain(dominio string, ip string, comando string) string {
 	reloj := "1,0,0"
 	aux := strings.Split(dominio, ".")
 	extension := aux[1]
@@ -95,17 +96,18 @@ func createDomain(dominio string, ip string, comando string) {
 	pathLog := "./LogDNS1/" + extensionFinal + ".txt"
 	createFile(pathLog)
 	data := reloj + "?" + dominio + "?" + ip
-	writeFile(path, comando, "ZF", data)
-
+	clock := writeFile(path, comando, "ZF", data)
+	return clock
 }
 
-func updateDomain(dominio string, tipoCambio string, parametroNuevo string, comando string) {
+func updateDomain(dominio string, tipoCambio string, parametroNuevo string, comando string) string {
 	aux := strings.Split(dominio, ".")
 	extension := aux[1]
 	extensionFinal := "." + extension
 	path := "./ZFDNS1/" + extensionFinal + ".txt"
 	data := dominio + "?" + tipoCambio + "?" + parametroNuevo
-	writeFile(path, comando, "ZF", data)
+	clock := writeFile(path, comando, "ZF", data)
+	return clock
 
 }
 
@@ -127,21 +129,23 @@ func createFile(path string) {
 
 }
 
-func deleteDomain(dominio string, comando string) {
+func deleteDomain(dominio string, comando string) string {
 	aux := strings.Split(dominio, ".")
 	extension := aux[1]
 	extensionFinal := "." + extension
 	path := "./ZFDNS1/" + extensionFinal + ".txt"
 	data := dominio
-	writeFile(path, comando, "ZF", data)
+	clock := writeFile(path, comando, "ZF", data)
+	return clock
 }
 
-func writeFile(path string, comando string, archivo string, data string) {
+func writeFile(path string, comando string, archivo string, data string) string {
 
 	// Open file using READ & WRITE permission.
+	clock := "[]" //valor dummy
 	var file, err = os.OpenFile(path, os.O_APPEND|os.O_WRONLY, 0644)
 	if isError(err) {
-		return
+		return ""
 	}
 	defer file.Close()
 
@@ -164,11 +168,11 @@ func writeFile(path string, comando string, archivo string, data string) {
 
 				_, err = fmt.Fprintln(file, reloj)
 				if isError(err) {
-					return
+					return ""
 				}
 				_, err = fmt.Fprintln(file, formato)
 				if isError(err) {
-					return
+					return ""
 				}
 
 				aux = strings.Split(dominio, ".")
@@ -180,9 +184,11 @@ func writeFile(path string, comando string, archivo string, data string) {
 				//cuando el archivo no existe
 				auxiliar = 0
 
+				clock = reloj
+
 				err = file.Sync()
 				if isError(err) {
-					return
+					return ""
 				}
 			} else {
 				aux := strings.Split(data, "?")
@@ -194,7 +200,7 @@ func writeFile(path string, comando string, archivo string, data string) {
 				formato := dominio + " IN A " + ip
 				_, err = fmt.Fprintln(file, formato)
 				if isError(err) {
-					return
+					return ""
 				}
 
 				relojAntiguo := readFileReloj(path)
@@ -202,12 +208,14 @@ func writeFile(path string, comando string, archivo string, data string) {
 				relojAux := strings.Split(relojAntiguo, ",")
 				i, err := strconv.Atoi(relojAux[0])
 				if isError(err) {
-					return
+					return ""
 				}
 				i++
 				s := strconv.Itoa(i)
 				relojNuevo := s + "," + relojAux[1] + "," + relojAux[2]
 				updateFile(path, relojAntiguo, relojNuevo)
+
+				clock = relojNuevo
 
 				aux = strings.Split(dominio, ".")
 				extension := aux[1]
@@ -219,7 +227,7 @@ func writeFile(path string, comando string, archivo string, data string) {
 
 				err = file.Sync()
 				if isError(err) {
-					return
+					return ""
 				}
 
 			}
@@ -230,12 +238,14 @@ func writeFile(path string, comando string, archivo string, data string) {
 			relojAux := strings.Split(relojAntiguo, ",")
 			i, err := strconv.Atoi(relojAux[0])
 			if isError(err) {
-				return
+				return ""
 			}
 			i++
 			s := strconv.Itoa(i)
 			relojNuevo := s + "," + relojAux[1] + "," + relojAux[2]
 			updateFile(path, relojAntiguo, relojNuevo)
+
+			clock = relojNuevo
 
 			aux := strings.Split(data, "?")
 			dominio := aux[0]
@@ -256,7 +266,7 @@ func writeFile(path string, comando string, archivo string, data string) {
 				writeLog(path2, text)
 				err = file.Sync()
 				if isError(err) {
-					return
+					return ""
 				}
 
 			} else if tipoDeCambio == "ip" {
@@ -274,7 +284,7 @@ func writeFile(path string, comando string, archivo string, data string) {
 				writeLog(path2, text)
 				err = file.Sync()
 				if isError(err) {
-					return
+					return ""
 				}
 			}
 
@@ -285,7 +295,7 @@ func writeFile(path string, comando string, archivo string, data string) {
 			relojAux := strings.Split(relojAntiguo, ",")
 			i, err := strconv.Atoi(relojAux[0])
 			if isError(err) {
-				return
+				return ""
 			}
 			i++
 			s := strconv.Itoa(i)
@@ -293,17 +303,11 @@ func writeFile(path string, comando string, archivo string, data string) {
 			aux := readFile(path, data) //obtenemos el termino que necesitamos reemplazar por una linea en blanco
 			terminosAux := strings.Split(aux, " ")
 			dominio := terminosAux[0]
-			//In := terminosAux[1]
-			//A := terminosAux[2]
-			//Ipe := terminosAux[3]
-			//replace := " "
 
-			/*updateFile(path, dominio, replace)
-			updateFile(path, In, replace)
-			updateFile(path, A, replace)
-			updateFile(path, Ipe, replace)*/
 			deleteLine(path, dominio)
 			updateFile(path, relojAntiguo, relojNuevo)
+
+			clock = relojNuevo
 
 			help := strings.Split(dominio, ".")
 			extension := help[1]
@@ -312,7 +316,7 @@ func writeFile(path string, comando string, archivo string, data string) {
 			writeLog(path2, text)
 			err = file.Sync()
 			if isError(err) {
-				return
+				return ""
 			}
 		}
 	}
@@ -320,6 +324,7 @@ func writeFile(path string, comando string, archivo string, data string) {
 	// Save file changes.
 
 	fmt.Println("File Updated Successfully.")
+	return clock
 }
 
 func deleteLine(ruta string, name string) {
