@@ -74,12 +74,16 @@ func (*serverAdmin) AdminDNSComm(ctx context.Context, req *adminDNSpb.CommandAdm
 }
 
 func (*serverBroker) BrokerDNSComm(ctx context.Context, req *brokerDNSpb.ClienteBrRequest) (*brokerDNSpb.DnsClientResponse, error) {
-	fmt.Println("Request recibido:", req.CommCliente)
-	ack := "tu pagina esta en 10.11.12.13"
-	reloj := "0.0.0"
+	fmt.Println("Request recibido:", req.CommCliente) //recibe nombre.dom
+	varAux := strings.Split(req.CommCliente, ".")
+	path := "./ZFDNS3/." + varAux[1] + ".txt"
+	aux := readFile(path, req.CommCliente)
+	//terminoAux := strings.Split(aux, " ") //recibe ej "algo.com 3.4.5.3"
+	//ipDom := terminoAux[1]
+	reloj := readFileReloj(path)
 	ipDNSpropia := ipDNS3Broker
 	res := &brokerDNSpb.DnsClientResponse{
-		IpDominio: ack,
+		IpDominio: aux,
 		Reloj:     reloj,
 		IpDNS:     ipDNSpropia,
 	}
@@ -396,7 +400,8 @@ func updateFile(path string, terminoAntiguo string, terminoNuevo string) {
 func readFileReloj(path string) string {
 	file, err := os.Open(path)
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println("Error", err.Error())
+		return "No encontrado"
 	}
 
 	scanner := bufio.NewScanner(file)
@@ -415,7 +420,8 @@ func readFileReloj(path string) string {
 func readFile(path string, termino string) string {
 	file, err := os.Open(path)
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println("Error", err.Error())
+		return "No encontrado"
 	}
 	defer file.Close()
 

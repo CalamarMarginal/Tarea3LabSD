@@ -76,12 +76,16 @@ func (*serverAdmin) AdminDNSComm(ctx context.Context, req *adminDNSpb.CommandAdm
 }
 
 func (*serverBroker) BrokerDNSComm(ctx context.Context, req *brokerDNSpb.ClienteBrRequest) (*brokerDNSpb.DnsClientResponse, error) {
-	fmt.Println("Request recibido:", req.CommCliente)
-	ack := "tu pagina esta en 10.11.12.13"
-	reloj := "0.0.0"
+	fmt.Println("Request recibido:", req.CommCliente) //recibe nombre.dom
+	varAux := strings.Split(req.CommCliente, ".")
+	path := "./ZFDNS1/." + varAux[1] + ".txt"
+	aux := readFile(path, req.CommCliente)
+	//terminoAux := strings.Split(aux, " ") //recibe ej "algo.com 3.4.5.3"
+	//ipDom := terminoAux[1]
+	reloj := readFileReloj(path)
 	ipDNSpropia := ipDNS1Broker
 	res := &brokerDNSpb.DnsClientResponse{
-		IpDominio: ack,
+		IpDominio: aux,
 		Reloj:     reloj,
 		IpDNS:     ipDNSpropia,
 	}
@@ -397,7 +401,8 @@ func updateFile(path string, terminoAntiguo string, terminoNuevo string) {
 func readFileReloj(path string) string {
 	file, err := os.Open(path)
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println("Error", err.Error())
+		return "No encontrado"
 	}
 
 	scanner := bufio.NewScanner(file)
@@ -416,7 +421,8 @@ func readFileReloj(path string) string {
 func readFile(path string, termino string) string {
 	file, err := os.Open(path)
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println("Error", err.Error())
+		return "No encontrado"
 	}
 	defer file.Close()
 
@@ -532,11 +538,11 @@ func clientDNS1DNS2(c clientDNSpb.ClientDNSServiceClient) {
 	for i, nombreDominio := range auxDominio {
 		if len(nombreDominio) > 0 {
 			auxNombreDominio := strings.Split(nombreDominio, " ")
-			aux_reloj := strings.Split(reloj, "?")
+			auxReloj := strings.Split(reloj, "?")
 			nombreDominio := auxNombreDominio[0]
 			// fmt.Println("nombreDominio", nombreDominio)
-			// fmt.Println("reloj", aux_reloj[i])
-			comprobacionRelojes("./ZFDNS1", log, nombreDominio, aux_reloj[i])
+			// fmt.Println("reloj", auxReloj[i])
+			comprobacionRelojes("./ZFDNS1", log, nombreDominio, auxReloj[i])
 		}
 	}
 	// recorrerDirectorioRelojNuevo("./ZFDNS1")
@@ -687,27 +693,27 @@ func comprobacionRelojes(folder string, log string, nombreDominio string, reloj 
 			lines := strings.Split(string(input), "\n")
 
 			if reloj != lines[0] {
-				aux_split_DNSpropio := strings.Split(lines[0], ",")
-				aux_split_DNSexterno := strings.Split(reloj, ",")
+				auxSplitDNSpropio := strings.Split(lines[0], ",")
+				auxSplitDNSexterno := strings.Split(reloj, ",")
 
-				// fmt.Println("reloj dns propio", aux_split_DNSpropio)
-				// fmt.Println("reloj dns externo", aux_split_DNSexterno)
+				// fmt.Println("reloj dns propio", auxSplitDNSpropio)
+				// fmt.Println("reloj dns externo", auxSplitDNSexterno)
 
-				for i, valor := range aux_split_DNSpropio {
+				for i, valor := range auxSplitDNSpropio {
 
 					valorDNSpropia, err2 := strconv.Atoi(valor)
 					if err2 != nil {
 						fmt.Println(err)
 					}
-					valorDNSexterna, err3 := strconv.Atoi(aux_split_DNSexterno[i])
+					valorDNSexterna, err3 := strconv.Atoi(auxSplitDNSexterno[i])
 					if err3 != nil {
 						fmt.Println(err)
 					}
-					if valor != aux_split_DNSexterno[i] {
+					if valor != auxSplitDNSexterno[i] {
 
 						if valorDNSpropia < valorDNSexterna {
 							merge(j, valorDNSexterna, nombreDominio, log)
-							nuevoReloj += aux_split_DNSexterno[i]
+							nuevoReloj += auxSplitDNSexterno[i]
 							nuevoReloj += ","
 						} else {
 							nuevoReloj += valor

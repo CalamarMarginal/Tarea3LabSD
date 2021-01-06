@@ -74,12 +74,16 @@ func (*serverAdmin) AdminDNSComm(ctx context.Context, req *adminDNSpb.CommandAdm
 }
 
 func (*serverBroker) BrokerDNSComm(ctx context.Context, req *brokerDNSpb.ClienteBrRequest) (*brokerDNSpb.DnsClientResponse, error) {
-	fmt.Println("Request recibido:", req.CommCliente)
-	ack := "tu pagina esta en 10.11.12.13"
-	reloj := "0.0.0"
+	fmt.Println("Request recibido:", req.CommCliente) //recibe nombre.dom
+	varAux := strings.Split(req.CommCliente, ".")
+	path := "./ZFDNS2/." + varAux[1] + ".txt"
+	aux := readFile(path, req.CommCliente)
+	//terminoAux := strings.Split(aux, " ") //recibe ej "algo.com 3.4.5.3"
+	//ipDom := terminoAux[1]
+	reloj := readFileReloj(path)
 	ipDNSpropia := ipDNS2Broker
 	res := &brokerDNSpb.DnsClientResponse{
-		IpDominio: ack,
+		IpDominio: aux,
 		Reloj:     reloj,
 		IpDNS:     ipDNSpropia,
 	}
@@ -133,7 +137,7 @@ func deleteDomain(dominio string, comando string) string {
 	aux := strings.Split(dominio, ".")
 	extension := aux[1]
 	extensionFinal := "." + extension
-	path := "./ZFDNS2/" + extensionFinal + ".txt"
+	path := "./ZFDNS2/." + extensionFinal + ".txt"
 	data := dominio
 	clock := writeFile(path, comando, "ZF", data)
 	return clock
@@ -395,7 +399,8 @@ func updateFile(path string, terminoAntiguo string, terminoNuevo string) {
 func readFileReloj(path string) string {
 	file, err := os.Open(path)
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println("Error", err.Error())
+		return "No encontrado"
 	}
 
 	scanner := bufio.NewScanner(file)
@@ -414,7 +419,8 @@ func readFileReloj(path string) string {
 func readFile(path string, termino string) string {
 	file, err := os.Open(path)
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println("Error", err.Error())
+		return "No encontrado"
 	}
 	defer file.Close()
 
@@ -488,10 +494,10 @@ func (*serverDNS) ClientDNS(ctx context.Context, req *clientDNSpb.ClienteDNSRequ
 
 	reloj := ""
 
-	for _, reloj_aux := range aux {
-		if len(reloj_aux) > 0 {
+	for _, relojAux := range aux {
+		if len(relojAux) > 0 {
 
-			auxEspacio := strings.Split(reloj_aux, " ")
+			auxEspacio := strings.Split(relojAux, " ")
 			if len(auxEspacio) > 2 {
 				reloj += auxEspacio[1]
 				reloj += "?"
@@ -531,8 +537,8 @@ func replicandoInfo(log string, zf string) {
 	cmd := ""
 	extension := ""
 
-	aux_log := strings.Split(log, "?")
-	for _, valores := range aux_log {
+	auxLog := strings.Split(log, "?")
+	for _, valores := range auxLog {
 		valorEspecifico := strings.Split(valores, " ")
 		fmt.Println(valorEspecifico)
 		for k, term := range valorEspecifico {
@@ -610,15 +616,15 @@ func replicandoInfo(log string, zf string) {
 		}
 	}
 
-	aux_zf := strings.Split(zf, "?")
+	auxZf := strings.Split(zf, "?")
 	data := ""
 	cont := 0
 
-	for _, a := range aux_zf {
+	for _, a := range auxZf {
 		fmt.Println(a)
-		a_aux := strings.Split(a, " ")
-		fmt.Println(a_aux)
-		for i, x := range a_aux {
+		aAux := strings.Split(a, " ")
+		fmt.Println(aAux)
+		for i, x := range aAux {
 			if i == 1 {
 				reloj := x
 				fmt.Println("reloj es ", reloj)
@@ -646,9 +652,9 @@ func replicandoInfo(log string, zf string) {
 
 	}
 
-	aux_2 := strings.Split(data, "?")
+	aux2 := strings.Split(data, "?")
 
-	for _, x := range aux_2 {
+	for _, x := range aux2 {
 		var file, err = os.OpenFile(pathZF, os.O_APPEND|os.O_WRONLY, 0644)
 		if isError(err) {
 			fmt.Println(err)
