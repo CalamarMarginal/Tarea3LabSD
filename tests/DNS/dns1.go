@@ -145,7 +145,7 @@ func writeFile(path string, comando string, archivo string, data string) string 
 	clock := "[]" //valor dummy
 	var file, err = os.OpenFile(path, os.O_APPEND|os.O_WRONLY, 0644)
 	if isError(err) {
-		return "no existe"
+		return "Dominio no existe"
 	}
 	defer file.Close()
 
@@ -238,7 +238,7 @@ func writeFile(path string, comando string, archivo string, data string) string 
 			relojAux := strings.Split(relojAntiguo, ",")
 			i, err := strconv.Atoi(relojAux[0])
 			if isError(err) {
-				return "no existe"
+				return "Dominio no existe"
 			}
 			i++
 			s := strconv.Itoa(i)
@@ -257,6 +257,9 @@ func writeFile(path string, comando string, archivo string, data string) string 
 				dominioAntiguo := readFile(path, dominio)
 				AUX := strings.Split(dominioAntiguo, " ")
 				dominioFinalAntiguo = AUX[0]
+				if dominioFinalAntiguo == "" {
+					return "Dominio no existe"
+				}
 				updateFile(path, dominioFinalAntiguo, valorNuevo)
 
 				aux = strings.Split(dominioFinalAntiguo, ".")
@@ -266,12 +269,15 @@ func writeFile(path string, comando string, archivo string, data string) string 
 				writeLog(path2, text)
 				err = file.Sync()
 				if isError(err) {
-					return "no existe"
+					return "Dominio no existe"
 				}
 
 			} else if tipoDeCambio == "ip" {
-				fmt.Println("entre a ip")
+				//fmt.Println("entre a ip")
 				dominioAntiguo := readFile(path, dominio)
+				if dominioAntiguo == "" {
+					return "Dominio no existe"
+				}
 				AUX := strings.Split(dominioAntiguo, " ")
 				ipFinalAntiguo := AUX[3]
 
@@ -284,7 +290,7 @@ func writeFile(path string, comando string, archivo string, data string) string 
 				writeLog(path2, text)
 				err = file.Sync()
 				if isError(err) {
-					return "no existe"
+					return "Dominio no existe"
 				}
 			}
 
@@ -295,7 +301,7 @@ func writeFile(path string, comando string, archivo string, data string) string 
 			relojAux := strings.Split(relojAntiguo, ",")
 			i, err := strconv.Atoi(relojAux[0])
 			if isError(err) {
-				return "no existe"
+				return "Dominio no existe"
 			}
 			i++
 			s := strconv.Itoa(i)
@@ -303,6 +309,9 @@ func writeFile(path string, comando string, archivo string, data string) string 
 			aux := readFile(path, data) //obtenemos el termino que necesitamos reemplazar por una linea en blanco
 			terminosAux := strings.Split(aux, " ")
 			dominio := terminosAux[0]
+			if dominio == "" {
+				return "Dominio no existe"
+			}
 
 			deleteLine(path, dominio)
 			updateFile(path, relojAntiguo, relojNuevo)
@@ -316,7 +325,7 @@ func writeFile(path string, comando string, archivo string, data string) string 
 			writeLog(path2, text)
 			err = file.Sync()
 			if isError(err) {
-				return "no existe"
+				return "Dominio no existe"
 			}
 		}
 	}

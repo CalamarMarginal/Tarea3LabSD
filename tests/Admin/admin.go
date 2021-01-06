@@ -19,12 +19,16 @@ const ipBroker string = "0.0.0.0:50059"
 
 var lastDNSVisited string
 
-type clkIP struct {
-	reloj string
-	dns   string
-}
+var contRedirect int //anti loops recursivos
 
-var dictDom = map[string]clkIP{}
+var dictDom = map[string]string{}
+
+func checkDic() {
+	fmt.Println("Valores en diccionario:")
+	for k, v := range dictDom {
+		fmt.Printf("%s -> %s\n", k, v)
+	}
+}
 
 func opcionComando() int {
 	var opcion int
@@ -99,6 +103,12 @@ func sendCmdToBroker(c adminBrokerpb.AdminBrokerServiceClient, comandoInfo strin
 
 func sendCmdToDNS(c adminDNSpb.AdminDNSServiceClient, comandoInfo string, comm int) {
 
+	if contRedirect > 2 {
+		fmt.Println("No existe el dominio")
+		contRedirect = 0
+		return
+	}
+
 	if comm == 1 { //create
 		ncom := "Create"
 		aux := strings.Split(comandoInfo, " ")
@@ -116,7 +126,8 @@ func sendCmdToDNS(c adminDNSpb.AdminDNSServiceClient, comandoInfo string, comm i
 		}
 		time.Sleep(1000 * time.Millisecond)
 		log.Printf("DNS dice %v", res.Ack)
-		dictDom[name] = clkIP{reloj: res.Ack, dns: lastDNSVisited}
+		vaux := res.Ack + "?" + lastDNSVisited
+		dictDom[name] = vaux
 		fmt.Println(dictDom[name])
 	} else if comm == 2 { //update
 		ncom := "Update"
@@ -136,8 +147,34 @@ func sendCmdToDNS(c adminDNSpb.AdminDNSServiceClient, comandoInfo string, comm i
 		}
 		time.Sleep(1000 * time.Millisecond)
 		log.Printf("DNS dice %v", res.Ack)
-		dictDom[name] = clkIP{reloj: res.Ack, dns: lastDNSVisited}
-		fmt.Println(dictDom[name])
+
+		if res.Ack == "Dominio no existe" {
+			contRedirect++
+			_, ok := dictDom[name]
+			fmt.Println("Buscando DNS actualizado")
+			aux4 := strings.Split(dictDom[name], "?")
+			if ok == true { //existe en el diccionario
+				fmt.Println("Redirigiendo a ", aux4[1], "...")
+				/*vaux := res.Ack + "?" + lastDNSVisited //reloj + dns
+				dictDom[name] = vaux
+				fmt.Println(dictDom[name])*/
+				connectToDNS(aux4[1], comandoInfo, comm)
+				return
+			}
+			fmt.Println("El dominio no se ha registrado")
+			return
+
+		}
+		if tipo == "name" {
+			vaux := res.Ack + "?" + lastDNSVisited //reloj + dns
+			dictDom[param] = vaux
+			fmt.Println(dictDom[param])
+		} else if tipo == "ip" {
+			vaux := res.Ack + "?" + lastDNSVisited //reloj + dns
+			dictDom[name] = vaux
+			fmt.Println(dictDom[name])
+		}
+
 	} else { //delete
 		ncom := "Delete"
 		req := &adminDNSpb.CommandAdminDNS{
@@ -152,8 +189,22 @@ func sendCmdToDNS(c adminDNSpb.AdminDNSServiceClient, comandoInfo string, comm i
 		}
 		time.Sleep(1000 * time.Millisecond)
 		log.Printf("DNS dice %v", res.Ack)
-		dictDom[comandoInfo] = clkIP{reloj: res.Ack, dns: lastDNSVisited}
-		fmt.Println(dictDom[comandoInfo])
+
+		if res.Ack == "Dominio no existe" {
+			contRedirect++
+			_, ok := dictDom[comandoInfo]
+			fmt.Println("Buscando DNS actualizado")
+			aux4 := strings.Split(dictDom[comandoInfo], "?")
+			if ok == true { //existe en el diccionario
+				fmt.Println("Redirigiendo a ", aux4[1], "...")
+				connectToDNS(aux4[1], comandoInfo, comm)
+				return
+			}
+			fmt.Println("El dominio no se ha registrado")
+			return
+
+		}
+
 	}
 
 }
@@ -176,6 +227,8 @@ func connectToDNS(ipConnect string, comando string, tipocom int) {
 }
 
 func main() {
+
+	contRedirect = 0
 
 	for {
 
@@ -212,6 +265,7 @@ func main() {
 		fmt.Println(ipRedirect)
 
 		connectToDNS(ipRedirect, coman, comd)
+		checkDic()
 	}
 
 }
