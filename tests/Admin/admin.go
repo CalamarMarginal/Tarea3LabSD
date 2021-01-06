@@ -169,6 +169,7 @@ func sendCmdToDNS(c adminDNSpb.AdminDNSServiceClient, comandoInfo string, comm i
 		if tipo == "name" {
 			vaux := res.Ack + "?" + lastDNSVisited //reloj + dns
 			dictDom[param] = vaux
+			delete(dictDom, name)
 			fmt.Println(dictDom[param])
 		} else if tipo == "ip" {
 			vaux := res.Ack + "?" + lastDNSVisited //reloj + dns
@@ -206,6 +207,7 @@ func sendCmdToDNS(c adminDNSpb.AdminDNSServiceClient, comandoInfo string, comm i
 
 		}
 		contRedirect = 0
+		delete(dictDom, comandoInfo)
 
 	}
 
