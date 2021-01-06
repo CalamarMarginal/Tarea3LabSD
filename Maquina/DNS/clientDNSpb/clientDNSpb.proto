@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+package clientdns;
+
+//ruta
+option go_package = "";
+
+message ClienteDNSRequest {
+    string timeComplete = 1;
+}
+
+message ClientDNSResponse {
+    string log = 1;
+    string reloj = 2;
+}
+
+message ClientDNSRequestConfirmation {
+    string log = 1;
+    string zf = 2;
+}
+
+message ClientDNSResponseConfirmation {
+    string ack = 1;
+}
+
+service ClientDNSService {
+    // el DNS1 envía un mensaje cuando se cumplio los 5 minutos y recibe 
+    rpc ClientDNS (ClienteDNSRequest) returns (ClientDNSResponse) {};
+    // nodo dominante envia su log y reloj actualizado y recibe un ack por partes de los otros DNS
+    rpc ClientDNSConfirmation (ClientDNSRequestConfirmation) returns (ClientDNSResponseConfirmation) {};
+}

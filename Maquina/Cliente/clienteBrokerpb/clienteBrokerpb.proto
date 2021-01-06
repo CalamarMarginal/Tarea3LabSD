@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package cliente;
+
+
+option go_package = "";
+
+message ClienteRequest {
+    string dominio = 1;
+}
+
+message BrokerResponse {
+    string ip = 1; //ip del dominio solicitado
+    string reloj = 2;
+    string ipDNS = 3;
+}
+
+service ClienteBrokerService {
+    rpc ClienteBroker (ClienteRequest) returns (BrokerResponse);
+}
