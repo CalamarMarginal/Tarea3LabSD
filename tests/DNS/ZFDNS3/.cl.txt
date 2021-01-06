@@ -1,0 +1,3 @@
+0,0,2
+facebook.cl IN A 10.10.10.1
+emol.cl IN A 19.2.12.3

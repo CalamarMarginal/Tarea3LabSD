@@ -432,13 +432,68 @@ func isError(err error) bool {
 	return (err != nil)
 }
 
+func recorrerDirectorio(folder string) string {
+	archivos, err := ioutil.ReadDir(folder)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	data := ""
+
+	for _, archivo := range archivos {
+		data += archivo.Name()
+		data += " "
+		fmt.Println("Nombre:", archivo.Name())
+		// fmt.Println("Tamaño:", archivo.Size())
+		// fmt.Println("Modo:", archivo.Mode())
+		// fmt.Println("Ultima modificación:", archivo.ModTime())
+		// fmt.Println("Es directorio?:", archivo.IsDir())
+		fmt.Println("-----------------------------------------")
+		path := folder + "/" + archivo.Name()
+		input, err := ioutil.ReadFile(path)
+		if err != nil {
+			log.Fatalln(err)
+		}
+		lines := strings.Split(string(input), "\n")
+
+		for _, line := range lines {
+			data += line
+			data += " "
+			fmt.Println(line)
+		}
+		data += "?"
+	}
+	fmt.Println("data", data)
+	return data
+}
+
 func (*serverDNS) ClientDNS(ctx context.Context, req *clientDNSpb.ClienteDNSRequest) (*clientDNSpb.ClientDNSResponse, error) {
 	//da igual que comando sea, el broker solo responde con la ip de una dns
 	fmt.Println("Timer:", req.TimeComplete)
 
+	dataLog := recorrerDirectorio("./LogDNS2")
+	dataZf := recorrerDirectorio("./ZFDNS2")
+
+	aux := strings.Split(dataZf, "?")
+
+	reloj := ""
+
+	for _, reloj_aux := range aux {
+		if len(reloj_aux) > 0 {
+
+			auxEspacio := strings.Split(reloj_aux, " ")
+			if len(auxEspacio) > 2 {
+				reloj += auxEspacio[1]
+				reloj += "?"
+			}
+		}
+	}
+
+	fmt.Println("reloj", reloj)
+
 	res := &clientDNSpb.ClientDNSResponse{
-		Log:   "Log",
-		Reloj: "reloj",
+		Log:   dataLog,
+		Reloj: reloj,
 	}
 
 	return res, nil

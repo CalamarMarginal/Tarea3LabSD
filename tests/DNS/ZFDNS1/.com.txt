@@ -1,0 +1,7 @@
+6,0,0
+google.com IN A 190.12.3.2
+facebook.com IN A 12.12.3.2
+hp.com IN A 19.12.2.3
+lenovo.com IN A 10.2.3.4
+aiwa.com IN A 10.2.2.3
+microsoft.com IN A 12.2.3.1

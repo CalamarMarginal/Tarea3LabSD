@@ -510,7 +510,24 @@ func clientDNS1DNS2(c clientDNSpb.ClientDNSServiceClient) {
 		log.Printf("Error, calling DNS2: \n")
 	}
 
-	log.Printf("DNS2 Responde: %v", res)
+	log := res.GetLog()
+	reloj := res.GetReloj()
+
+	fmt.Println("DNS 2 --> log: : ", log)
+	fmt.Println("DNS 2 --> reloj: : ", reloj)
+
+	auxDominio := strings.Split(log, "?")
+
+	for i, nombreDominio := range auxDominio {
+		if len(nombreDominio) > 0 {
+			auxNombreDominio := strings.Split(nombreDominio, " ")
+			aux_reloj := strings.Split(reloj, "?")
+			nombreDominio := auxNombreDominio[0]
+			fmt.Println("nombreDominio", nombreDominio)
+			fmt.Println("reloj", aux_reloj[i])
+			comprobacionRelojes("./ZFDNS1", log, nombreDominio, aux_reloj[i])
+		}
+	}
 
 	return
 
@@ -635,8 +652,116 @@ func clientDNS1DNS3Confirmation(c clientDNSpb.ClientDNSServiceClient) {
 	return
 }
 
-func main() {
+func comprobacionRelojes(folder string, log string, nombreDominio string, reloj string) {
+	archivos, err := ioutil.ReadDir(folder)
+	if err != nil {
+		fmt.Println(err)
+	}
 
+	for _, archivo := range archivos {
+		if archivo.Name() == nombreDominio {
+
+			path := folder + "/" + archivo.Name()
+			input, err := ioutil.ReadFile(path)
+			if err != nil {
+				fmt.Println(err)
+			}
+
+			lines := strings.Split(string(input), "\n")
+
+			if reloj != lines[0] {
+				aux_split_DNSpropio := strings.Split(lines[0], ",")
+				aux_split_DNSexterno := strings.Split(reloj, ",")
+
+				fmt.Println("reloj dns propio", aux_split_DNSpropio)
+				fmt.Println("reloj dns externo", aux_split_DNSexterno)
+
+				for i, valor := range aux_split_DNSpropio {
+
+					valorDNSpropia, err2 := strconv.Atoi(valor)
+					if err2 != nil {
+						fmt.Println(err)
+					}
+					valorDNSexterna, err3 := strconv.Atoi(aux_split_DNSexterno[i])
+					if err3 != nil {
+						fmt.Println(err)
+					}
+					if valor != aux_split_DNSexterno[i] {
+
+						if valorDNSpropia > valorDNSexterna {
+							fmt.Println("valor DNSpropia es mayor")
+							fmt.Println("valorDNSpropia", valorDNSpropia)
+							fmt.Println("valorDNSexterna", valorDNSexterna)
+						} else if valorDNSpropia < valorDNSexterna {
+							fmt.Println("valor DNSexterna es mayor")
+							fmt.Println("valorDNSpropia", valorDNSpropia)
+							fmt.Println("valorDNSexterna", valorDNSexterna)
+
+						}
+
+					} else {
+						fmt.Println("valores iguales")
+						fmt.Println("valorDNSpropia", valorDNSpropia)
+						fmt.Println("valorDNSexterna", valorDNSexterna)
+					}
+
+				}
+
+			}
+
+		}
+	}
+}
+
+func merge(DNSmayor string, log string) {
+
+	//1 es que es mayor la dns propia, 0 es mayor la dns externa
+	if DNSmayor == "1" {
+
+	}
+
+}
+
+func recorrerDirectorio(folder string) string {
+	archivos, err := ioutil.ReadDir(folder)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	data := ""
+
+	for _, archivo := range archivos {
+		data += archivo.Name()
+		data += " "
+		fmt.Println("Nombre:", archivo.Name())
+		// fmt.Println("Tamaño:", archivo.Size())
+		// fmt.Println("Modo:", archivo.Mode())
+		// fmt.Println("Ultima modificación:", archivo.ModTime())
+		// fmt.Println("Es directorio?:", archivo.IsDir())
+		fmt.Println("-----------------------------------------")
+		path := folder + "/" + archivo.Name()
+		input, err := ioutil.ReadFile(path)
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		lines := strings.Split(string(input), "\n")
+
+		for _, line := range lines {
+			data += line
+			data += " "
+		}
+
+		data += "?"
+
+	}
+	fmt.Println("data", data)
+	return data
+}
+
+func main() {
+	// recorrerDirectorio("./LogDNS1")
+	// recorrerDirectorio("./ZFDNS1")
 	var wg sync.WaitGroup
 	wg.Add(4)
 
@@ -648,7 +773,7 @@ func main() {
 			var wg2 sync.WaitGroup
 			wg2.Add(4)
 
-			timer2 := time.NewTimer(300 * time.Second)
+			timer2 := time.NewTimer(5 * time.Second)
 			<-timer2.C
 			// go clientDNS3()
 			go clientDNS2(&wg2)
