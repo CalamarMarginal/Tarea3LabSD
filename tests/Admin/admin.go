@@ -23,6 +23,13 @@ var contRedirect int //anti loops recursivos
 
 var dictDom = map[string]string{}
 
+func checkDic() {
+	fmt.Println("Valores en diccionario:")
+	for k, v := range dictDom {
+		fmt.Printf("%s -> %s\n", k, v)
+	}
+}
+
 func opcionComando() int {
 	var opcion int
 	for {
@@ -95,9 +102,9 @@ func sendCmdToBroker(c adminBrokerpb.AdminBrokerServiceClient, comandoInfo strin
 }
 
 func sendCmdToDNS(c adminDNSpb.AdminDNSServiceClient, comandoInfo string, comm int) {
-	contRedirect++
+
 	if contRedirect > 2 {
-		fmt.Println("No existe")
+		fmt.Println("No existe el dominio")
 		contRedirect = 0
 		return
 	}
@@ -142,11 +149,15 @@ func sendCmdToDNS(c adminDNSpb.AdminDNSServiceClient, comandoInfo string, comm i
 		log.Printf("DNS dice %v", res.Ack)
 
 		if res.Ack == "Dominio no existe" {
+			contRedirect++
 			_, ok := dictDom[name]
 			fmt.Println("Buscando DNS actualizado")
 			aux4 := strings.Split(dictDom[name], "?")
 			if ok == true { //existe en el diccionario
 				fmt.Println("Redirigiendo a ", aux4[1], "...")
+				/*vaux := res.Ack + "?" + lastDNSVisited //reloj + dns
+				dictDom[name] = vaux
+				fmt.Println(dictDom[name])*/
 				connectToDNS(aux4[1], comandoInfo, comm)
 				return
 			}
@@ -154,10 +165,16 @@ func sendCmdToDNS(c adminDNSpb.AdminDNSServiceClient, comandoInfo string, comm i
 			return
 
 		}
+		if tipo == "name" {
+			vaux := res.Ack + "?" + lastDNSVisited //reloj + dns
+			dictDom[param] = vaux
+			fmt.Println(dictDom[param])
+		} else if tipo == "ip" {
+			vaux := res.Ack + "?" + lastDNSVisited //reloj + dns
+			dictDom[name] = vaux
+			fmt.Println(dictDom[name])
+		}
 
-		vaux := res.Ack + "?" + lastDNSVisited //reloj + dns
-		dictDom[name] = vaux
-		fmt.Println(dictDom[name])
 	} else { //delete
 		ncom := "Delete"
 		req := &adminDNSpb.CommandAdminDNS{
@@ -174,6 +191,7 @@ func sendCmdToDNS(c adminDNSpb.AdminDNSServiceClient, comandoInfo string, comm i
 		log.Printf("DNS dice %v", res.Ack)
 
 		if res.Ack == "Dominio no existe" {
+			contRedirect++
 			_, ok := dictDom[comandoInfo]
 			fmt.Println("Buscando DNS actualizado")
 			aux4 := strings.Split(dictDom[comandoInfo], "?")
@@ -247,6 +265,7 @@ func main() {
 		fmt.Println(ipRedirect)
 
 		connectToDNS(ipRedirect, coman, comd)
+		checkDic()
 	}
 
 }
