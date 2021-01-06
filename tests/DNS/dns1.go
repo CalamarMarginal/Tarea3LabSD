@@ -33,6 +33,8 @@ const ipDNS3Broker string = "0.0.0.0:50057"
 const ipDNS1DNS2 string = "0.0.0.0:50050"
 const ipDNS1DNS3 string = "0.0.0.0:50051"
 
+var nuevoReloj string
+
 var auxiliar int //si el auxiliar es 1 es porque es la primera vez que se crea el archivo
 
 type serverAdmin struct{}
@@ -233,19 +235,6 @@ func writeFile(path string, comando string, archivo string, data string) string 
 			}
 
 		} else if comando == "Update" {
-			//--------------Reloj--------------
-			relojAntiguo := readFileReloj(path)
-			relojAux := strings.Split(relojAntiguo, ",")
-			i, err := strconv.Atoi(relojAux[0])
-			if isError(err) {
-				return "Dominio no existe"
-			}
-			i++
-			s := strconv.Itoa(i)
-			relojNuevo := s + "," + relojAux[1] + "," + relojAux[2]
-			updateFile(path, relojAntiguo, relojNuevo)
-
-			clock = relojNuevo
 
 			aux := strings.Split(data, "?")
 			dominio := aux[0]
@@ -293,9 +282,28 @@ func writeFile(path string, comando string, archivo string, data string) string 
 					return "Dominio no existe"
 				}
 			}
+			//--------------Reloj--------------
+			relojAntiguo := readFileReloj(path)
+			relojAux := strings.Split(relojAntiguo, ",")
+			i, err := strconv.Atoi(relojAux[0])
+			if isError(err) {
+				return "Dominio no existe"
+			}
+			i++
+			s := strconv.Itoa(i)
+			relojNuevo := s + "," + relojAux[1] + "," + relojAux[2]
+			updateFile(path, relojAntiguo, relojNuevo)
+
+			clock = relojNuevo
 
 		} else if comando == "Delete" {
 
+			aux := readFile(path, data) //obtenemos el termino que necesitamos reemplazar por una linea en blanco
+			terminosAux := strings.Split(aux, " ")
+			dominio := terminosAux[0]
+			if dominio == "" {
+				return "Dominio no existe"
+			}
 			relojAntiguo := readFileReloj(path)
 			// fmt.Println("reloj", relojAntiguo)
 			relojAux := strings.Split(relojAntiguo, ",")
@@ -306,12 +314,6 @@ func writeFile(path string, comando string, archivo string, data string) string 
 			i++
 			s := strconv.Itoa(i)
 			relojNuevo := s + "," + relojAux[1] + "," + relojAux[2]
-			aux := readFile(path, data) //obtenemos el termino que necesitamos reemplazar por una linea en blanco
-			terminosAux := strings.Split(aux, " ")
-			dominio := terminosAux[0]
-			if dominio == "" {
-				return "Dominio no existe"
-			}
 
 			deleteLine(path, dominio)
 			updateFile(path, relojAntiguo, relojNuevo)
@@ -522,8 +524,8 @@ func clientDNS1DNS2(c clientDNSpb.ClientDNSServiceClient) {
 	log := res.GetLog()
 	reloj := res.GetReloj()
 
-	fmt.Println("DNS 2 --> log: : ", log)
-	fmt.Println("DNS 2 --> reloj: : ", reloj)
+	// fmt.Println("DNS 2 --> log: : ", log)
+	// fmt.Println("DNS 2 --> reloj: : ", reloj)
 
 	auxDominio := strings.Split(log, "?")
 
@@ -532,11 +534,12 @@ func clientDNS1DNS2(c clientDNSpb.ClientDNSServiceClient) {
 			auxNombreDominio := strings.Split(nombreDominio, " ")
 			aux_reloj := strings.Split(reloj, "?")
 			nombreDominio := auxNombreDominio[0]
-			fmt.Println("nombreDominio", nombreDominio)
-			fmt.Println("reloj", aux_reloj[i])
+			// fmt.Println("nombreDominio", nombreDominio)
+			// fmt.Println("reloj", aux_reloj[i])
 			comprobacionRelojes("./ZFDNS1", log, nombreDominio, aux_reloj[i])
 		}
 	}
+	// recorrerDirectorioRelojNuevo("./ZFDNS1")
 
 	return
 
@@ -564,10 +567,13 @@ func clientDNS2confirmation(wg *sync.WaitGroup) {
 }
 
 func clientDNS1DNS2Confirmation(c clientDNSpb.ClientDNSServiceClient) {
-	//se crea un request basada en una estructura del protocol buffer
+
+	dataLog := recorrerDirectorio("./LogDNS1")
+	dataZf := recorrerDirectorio("./ZFDNS1")
+
 	req := &clientDNSpb.ClientDNSRequestConfirmation{
-		Log: "log",
-		Zf:  "zf",
+		Log: dataLog,
+		Zf:  dataZf,
 	}
 
 	res, err := c.ClientDNSConfirmation(context.Background(), req)
@@ -667,7 +673,9 @@ func comprobacionRelojes(folder string, log string, nombreDominio string, reloj 
 		fmt.Println(err)
 	}
 
-	for _, archivo := range archivos {
+	// fmt.Println("nombreDominio", nombreDominio)
+
+	for j, archivo := range archivos {
 		if archivo.Name() == nombreDominio {
 
 			path := folder + "/" + archivo.Name()
@@ -682,8 +690,8 @@ func comprobacionRelojes(folder string, log string, nombreDominio string, reloj 
 				aux_split_DNSpropio := strings.Split(lines[0], ",")
 				aux_split_DNSexterno := strings.Split(reloj, ",")
 
-				fmt.Println("reloj dns propio", aux_split_DNSpropio)
-				fmt.Println("reloj dns externo", aux_split_DNSexterno)
+				// fmt.Println("reloj dns propio", aux_split_DNSpropio)
+				// fmt.Println("reloj dns externo", aux_split_DNSexterno)
 
 				for i, valor := range aux_split_DNSpropio {
 
@@ -697,24 +705,22 @@ func comprobacionRelojes(folder string, log string, nombreDominio string, reloj 
 					}
 					if valor != aux_split_DNSexterno[i] {
 
-						if valorDNSpropia > valorDNSexterna {
-							fmt.Println("valor DNSpropia es mayor")
-							fmt.Println("valorDNSpropia", valorDNSpropia)
-							fmt.Println("valorDNSexterna", valorDNSexterna)
-						} else if valorDNSpropia < valorDNSexterna {
-							fmt.Println("valor DNSexterna es mayor")
-							fmt.Println("valorDNSpropia", valorDNSpropia)
-							fmt.Println("valorDNSexterna", valorDNSexterna)
-
+						if valorDNSpropia < valorDNSexterna {
+							merge(j, valorDNSexterna, nombreDominio, log)
+							nuevoReloj += aux_split_DNSexterno[i]
+							nuevoReloj += ","
+						} else {
+							nuevoReloj += valor
+							nuevoReloj += ","
 						}
 
 					} else {
-						fmt.Println("valores iguales")
-						fmt.Println("valorDNSpropia", valorDNSpropia)
-						fmt.Println("valorDNSexterna", valorDNSexterna)
+						nuevoReloj += valor
+						nuevoReloj += ","
 					}
 
 				}
+				fmt.Println("nuevo Reloj es ", nuevoReloj)
 
 			}
 
@@ -722,12 +728,149 @@ func comprobacionRelojes(folder string, log string, nombreDominio string, reloj 
 	}
 }
 
-func merge(DNSmayor string, log string) {
+func merge(posicion int, valorDNSexterna int, nombreDominio string, log string) {
 
-	//1 es que es mayor la dns propia, 0 es mayor la dns externa
-	if DNSmayor == "1" {
+	i := 0
+	j := 0
+	k := 0
+	cmd := ""
+
+	aux := strings.Split(log, "?")
+	// fmt.Println("aux", aux)
+
+	valorAiterar := aux[posicion]
+
+	// fmt.Println("valor a iterar", valorAiterar)
+
+	valorEspecifico := strings.Split(valorAiterar, " ")
+
+	for _, term := range valorEspecifico {
+		if term == "create" {
+			cmd = cmd + term
+			i++
+			continue
+		}
+		if i > 0 {
+			cmd = cmd + " " + term
+			i++
+		}
+		if i > 2 {
+			fmt.Println("------------------", cmd) //aca esta el comando
+			aux := strings.Split(cmd, " ")
+			dominio := aux[1]
+			ip := aux[2]
+			fmt.Println("dominio es: ", dominio)
+			fmt.Println("ip es: ", ip)
+			i = 0
+			cmd = ""
+
+			clock := createDomain(dominio, ip, "Create")
+			fmt.Println("clock: ", clock)
+
+		}
+		if term == "update" {
+			cmd = cmd + term
+			k++
+			continue
+		}
+		if k > 0 {
+			cmd = cmd + " " + term
+			k++
+		}
+		if k > 2 {
+			fmt.Println("------------------", cmd) //aca esta el comando
+			fmt.Println("nombreDominio¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿", nombreDominio)
+			extension := strings.Split(nombreDominio, ".")
+			if strings.HasSuffix(cmd, extension[1]) {
+				aux := strings.Split(cmd, " ")
+				dominioAntiguo := aux[1]
+				dominioNuevo := aux[2]
+				fmt.Println("dominioAntiguo es: ", dominioAntiguo)
+				fmt.Println("dominioNuevo es: ", dominioNuevo)
+				clock := updateDomain(dominioAntiguo, "name", dominioNuevo, "Update")
+				fmt.Println("clock: ", clock)
+
+			} else {
+				aux := strings.Split(cmd, " ")
+				dominioAntiguo := aux[1]
+				ip := aux[2]
+				fmt.Println("dominioAntiguo es: ", dominioAntiguo)
+				fmt.Println("ip es: ", ip)
+				clock := updateDomain(dominioAntiguo, "ip", ip, "Update")
+				fmt.Println("clock: ", clock)
+
+			}
+
+			k = 0
+			cmd = ""
+		}
+
+		if term == "delete" {
+			cmd = cmd + term
+			j++
+			continue
+		}
+		if j > 0 {
+			cmd = cmd + " " + term
+			j++
+		}
+		if j > 1 {
+			fmt.Println("------------------", cmd)
+			aux := strings.Split(cmd, " ")
+			dominio := aux[1] //aca esta el comando
+			fmt.Println("dominio es: ", dominio)
+			j = 0
+			cmd = ""
+			clock := deleteDomain(dominio, "Delete")
+			fmt.Println("clock: ", clock)
+
+		}
+	}
+
+}
+
+func recorrerDirectorioRelojNuevo(folder string) {
+	archivos, err := ioutil.ReadDir(folder)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	data := ""
+
+	relojes := strings.Split(nuevoReloj, ",")
+
+	fmt.Println("relojes: ", relojes)
+
+	// relojes_cantidad := int(len(relojes) / 3)
+
+	for _, archivo := range archivos {
+		data += archivo.Name()
+		data += " "
+		fmt.Println("Nombre:", archivo.Name())
+		// fmt.Println("Tamaño:", archivo.Size())
+		// fmt.Println("Modo:", archivo.Mode())
+		// fmt.Println("Ultima modificación:", archivo.ModTime())
+		// fmt.Println("Es directorio?:", archivo.IsDir())
+		fmt.Println("-----------------------------------------")
+		path := folder + "/" + archivo.Name()
+		input, err := ioutil.ReadFile(path)
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		lines := strings.Split(string(input), "\n")
+
+		for i, line := range lines {
+			if strings.Contains(line, ",") {
+				// lines[i] = relojes[i]
+				fmt.Println("relojes[i]", relojes[i])
+			}
+		}
+
+		data += "?"
 
 	}
+	fmt.Println("data", data)
 
 }
 
@@ -753,16 +896,14 @@ func recorrerDirectorio(folder string) string {
 		if err != nil {
 			log.Fatalln(err)
 		}
-
 		lines := strings.Split(string(input), "\n")
 
 		for _, line := range lines {
 			data += line
 			data += " "
+			fmt.Println(line)
 		}
-
 		data += "?"
-
 	}
 	fmt.Println("data", data)
 	return data
@@ -782,12 +923,18 @@ func main() {
 			var wg2 sync.WaitGroup
 			wg2.Add(4)
 
-			timer2 := time.NewTimer(5 * time.Second)
+			timer2 := time.NewTimer(20 * time.Second)
 			<-timer2.C
 			// go clientDNS3()
 			go clientDNS2(&wg2)
+			timer3 := time.NewTimer(1 * time.Second)
+			<-timer3.C
 			go clientDNS2confirmation(&wg2)
+			timer4 := time.NewTimer(1 * time.Second)
+			<-timer4.C
 			go clientDNS3(&wg2)
+			timer5 := time.NewTimer(1 * time.Second)
+			<-timer5.C
 			go clientDNS3confirmation(&wg2)
 			fmt.Println("300 segundos transcurridos")
 			wg2.Wait()

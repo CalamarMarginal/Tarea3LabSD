@@ -234,19 +234,6 @@ func writeFile(path string, comando string, archivo string, data string) string 
 			}
 
 		} else if comando == "Update" {
-			//--------------Reloj--------------
-			relojAntiguo := readFileReloj(path)
-			relojAux := strings.Split(relojAntiguo, ",")
-			i, err := strconv.Atoi(relojAux[2])
-			if isError(err) {
-				return "Dominio no existe"
-			}
-			i++
-			s := strconv.Itoa(i)
-			relojNuevo := relojAux[0] + "," + relojAux[1] + "," + s
-			updateFile(path, relojAntiguo, relojNuevo)
-
-			clock = relojNuevo
 
 			aux := strings.Split(data, "?")
 			dominio := aux[0]
@@ -294,9 +281,28 @@ func writeFile(path string, comando string, archivo string, data string) string 
 					return "Dominio no existe"
 				}
 			}
+			//--------------Reloj--------------
+			relojAntiguo := readFileReloj(path)
+			relojAux := strings.Split(relojAntiguo, ",")
+			i, err := strconv.Atoi(relojAux[2])
+			if isError(err) {
+				return "Dominio no existe"
+			}
+			i++
+			s := strconv.Itoa(i)
+			relojNuevo := relojAux[0] + "," + relojAux[1] + "," + s
+			updateFile(path, relojAntiguo, relojNuevo)
+
+			clock = relojNuevo
 
 		} else if comando == "Delete" {
 
+			aux := readFile(path, data) //obtenemos el termino que necesitamos reemplazar por una linea en blanco
+			terminosAux := strings.Split(aux, " ")
+			dominio := terminosAux[0]
+			if dominio == "" {
+				return "Dominio no existe"
+			}
 			relojAntiguo := readFileReloj(path)
 			// fmt.Println("reloj", relojAntiguo)
 			relojAux := strings.Split(relojAntiguo, ",")
@@ -307,12 +313,6 @@ func writeFile(path string, comando string, archivo string, data string) string 
 			i++
 			s := strconv.Itoa(i)
 			relojNuevo := relojAux[0] + "," + relojAux[1] + "," + s
-			aux := readFile(path, data) //obtenemos el termino que necesitamos reemplazar por una linea en blanco
-			terminosAux := strings.Split(aux, " ")
-			dominio := terminosAux[0]
-			if dominio == "" {
-				return "Dominio no existe"
-			}
 
 			deleteLine(path, dominio)
 			updateFile(path, relojAntiguo, relojNuevo)

@@ -233,18 +233,6 @@ func writeFile(path string, comando string, archivo string, data string) string 
 
 		} else if comando == "Update" {
 			//--------------Reloj--------------
-			relojAntiguo := readFileReloj(path)
-			relojAux := strings.Split(relojAntiguo, ",")
-			i, err := strconv.Atoi(relojAux[1])
-			if isError(err) {
-				return "Dominio no existe"
-			}
-			i++
-			s := strconv.Itoa(i)
-			relojNuevo := relojAux[0] + "," + s + "," + relojAux[2]
-			updateFile(path, relojAntiguo, relojNuevo)
-
-			clock = relojNuevo
 
 			aux := strings.Split(data, "?")
 			dominio := aux[0]
@@ -259,6 +247,7 @@ func writeFile(path string, comando string, archivo string, data string) string 
 				if dominioFinalAntiguo == "" {
 					return "Dominio no existe"
 				}
+
 				updateFile(path, dominioFinalAntiguo, valorNuevo)
 
 				aux = strings.Split(dominioFinalAntiguo, ".")
@@ -292,9 +281,27 @@ func writeFile(path string, comando string, archivo string, data string) string 
 					return "Dominio no existe"
 				}
 			}
+			relojAntiguo := readFileReloj(path)
+			relojAux := strings.Split(relojAntiguo, ",")
+			i, err := strconv.Atoi(relojAux[1])
+			if isError(err) {
+				return "Dominio no existe"
+			}
+			i++
+			s := strconv.Itoa(i)
+			relojNuevo := relojAux[0] + "," + s + "," + relojAux[2]
+			updateFile(path, relojAntiguo, relojNuevo)
+
+			clock = relojNuevo
 
 		} else if comando == "Delete" {
 
+			aux := readFile(path, data) //obtenemos el termino que necesitamos reemplazar por una linea en blanco
+			terminosAux := strings.Split(aux, " ")
+			dominio := terminosAux[0]
+			if dominio == "" {
+				return "Dominio no existe"
+			}
 			relojAntiguo := readFileReloj(path)
 			// fmt.Println("reloj", relojAntiguo)
 			relojAux := strings.Split(relojAntiguo, ",")
@@ -305,12 +312,6 @@ func writeFile(path string, comando string, archivo string, data string) string 
 			i++
 			s := strconv.Itoa(i)
 			relojNuevo := relojAux[0] + "," + s + "," + relojAux[2]
-			aux := readFile(path, data) //obtenemos el termino que necesitamos reemplazar por una linea en blanco
-			terminosAux := strings.Split(aux, " ")
-			dominio := terminosAux[0]
-			if dominio == "" {
-				return "Dominio no existe"
-			}
 
 			deleteLine(path, dominio)
 			updateFile(path, relojAntiguo, relojNuevo)
@@ -509,13 +510,167 @@ func (*serverDNS) ClientDNS(ctx context.Context, req *clientDNSpb.ClienteDNSRequ
 
 }
 
+func borrarRegistro(path string) {
+
+	err := os.Remove(path)
+	if err != nil {
+		fmt.Printf("Error eliminando archivo: %v\n", err)
+	} else {
+		fmt.Println("Eliminado correctamente")
+	}
+}
+
+func replicandoInfo(log string, zf string) {
+
+	pathZF := ""
+	pathLog := ""
+
+	i := 0
+	j := 0
+
+	cmd := ""
+	extension := ""
+
+	aux_log := strings.Split(log, "?")
+	for _, valores := range aux_log {
+		valorEspecifico := strings.Split(valores, " ")
+		fmt.Println(valorEspecifico)
+		for k, term := range valorEspecifico {
+			if k == 0 {
+
+				extension += term
+				fmt.Println(extension)
+				if len(extension) > 2 {
+
+					pathZF = "./ZFDNS2/" + extension
+					pathLog = "./LogDNS2/" + extension
+					fmt.Println("pathZF", pathZF)
+					fmt.Println("pathLog", pathLog)
+					borrarRegistro(pathZF)
+					borrarRegistro(pathLog)
+					createFile(pathZF)
+					createFile(pathLog)
+				}
+
+			} else if k != 0 {
+				if term == "create" || term == "update" {
+
+					cmd = cmd + term
+					i++
+					continue
+				}
+				if i > 0 {
+					cmd = cmd + " " + term
+					i++
+				}
+				if i > 2 {
+					var file, err = os.OpenFile(pathLog, os.O_APPEND|os.O_WRONLY, 0644)
+					if isError(err) {
+						fmt.Println(err)
+					}
+					defer file.Close()
+					_, err = fmt.Fprintln(file, cmd)
+					if isError(err) {
+						fmt.Println(err)
+					}
+
+					fmt.Println(cmd) //aca esta el comando
+					i = 0
+					cmd = ""
+
+				}
+				if term == "delete" {
+
+					cmd = cmd + term
+					j++
+					continue
+				}
+				if j > 0 {
+					cmd = cmd + " " + term
+					j++
+				}
+				if j > 1 {
+					var file, err = os.OpenFile(pathLog, os.O_APPEND|os.O_WRONLY, 0644)
+					if isError(err) {
+						fmt.Println(err)
+					}
+					defer file.Close()
+					_, err = fmt.Fprintln(file, cmd)
+					if isError(err) {
+						fmt.Println(err)
+					}
+
+					fmt.Println(cmd)
+					cmd = ""
+					j = 0
+
+				}
+			}
+
+		}
+	}
+
+	aux_zf := strings.Split(zf, "?")
+	data := ""
+	cont := 0
+
+	for _, a := range aux_zf {
+		fmt.Println(a)
+		a_aux := strings.Split(a, " ")
+		fmt.Println(a_aux)
+		for i, x := range a_aux {
+			if i == 1 {
+				reloj := x
+				fmt.Println("reloj es ", reloj)
+				var file, err = os.OpenFile(pathZF, os.O_APPEND|os.O_WRONLY, 0644)
+				if isError(err) {
+					fmt.Println(err)
+				}
+				defer file.Close()
+				_, err = fmt.Fprintln(file, reloj)
+				if isError(err) {
+					fmt.Println(err)
+				}
+			} else if i > 1 && cont < 4 {
+				data += x
+				data += " "
+				cont++
+			}
+			if cont == 4 {
+				data += "?"
+				cont = 0
+
+			}
+		}
+		fmt.Println(data)
+
+	}
+
+	aux_2 := strings.Split(data, "?")
+
+	for _, x := range aux_2 {
+		var file, err = os.OpenFile(pathZF, os.O_APPEND|os.O_WRONLY, 0644)
+		if isError(err) {
+			fmt.Println(err)
+		}
+		defer file.Close()
+		_, err = fmt.Fprintln(file, x)
+		if isError(err) {
+			fmt.Println(err)
+		}
+	}
+
+}
+
 func (*serverDNS) ClientDNSConfirmation(ctx context.Context, req *clientDNSpb.ClientDNSRequestConfirmation) (*clientDNSpb.ClientDNSResponseConfirmation, error) {
-	fmt.Println("Timer:", req.Log)
-	fmt.Println("Timer:", req.Zf)
+	fmt.Println("log:", req.GetLog())
+	fmt.Println("zf:", req.GetZf())
 
 	res := &clientDNSpb.ClientDNSResponseConfirmation{
-		Ack: "ack",
+		Ack: "replicando informacion en el DNS2",
 	}
+
+	replicandoInfo(req.GetLog(), req.GetZf())
 
 	return res, nil
 }

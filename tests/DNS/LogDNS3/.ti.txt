@@ -1,2 +1,0 @@
-create emol.ti 10.2.3.4
-create hp.ti 19.2.3.4

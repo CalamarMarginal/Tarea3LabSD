@@ -1,6 +1,0 @@
-create google.com 190.12.3.2
-create facebook.com 12.12.3.2
-create hp.com 19.12.2.3
-create lenovo.com 10.2.3.4
-create aiwa.com 10.2.2.3
-create microsoft.com 12.2.3.1

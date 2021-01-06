@@ -123,16 +123,19 @@ func redirectToDNS() string {
 		x1 := rand.NewSource(time.Now().UnixNano())
 		y1 := rand.New(x1)
 		opciondns := y1.Intn(4)
-		fmt.Println("Redirigiendo a DNS", opciondns, "...")
-		if opciondns == 1 { //redirige a dns1
-			dnsip = ipDNS1
-			return dnsip
-		} else if opciondns == 2 { //redirige a dns2
-			dnsip = ipDNS2
-			return dnsip
-		} else if opciondns == 3 { //redirige a dns3
-			dnsip = ipDNS3
-			return dnsip
+		if opciondns != 0 {
+
+			fmt.Println("Redirigiendo a DNS", opciondns, "...")
+			if opciondns == 1 { //redirige a dns1
+				dnsip = ipDNS1
+				return dnsip
+			} else if opciondns == 2 { //redirige a dns2
+				dnsip = ipDNS2
+				return dnsip
+			} else if opciondns == 3 { //redirige a dns3
+				dnsip = ipDNS3
+				return dnsip
+			}
 		}
 	}
 }
@@ -142,16 +145,19 @@ func redirectToDNS2() string {
 		x1 := rand.NewSource(time.Now().UnixNano())
 		y1 := rand.New(x1)
 		opciondns := y1.Intn(4)
-		fmt.Println("Redirigiendo a DNS", opciondns, "...")
-		if opciondns == 1 { //redirige a dns1
-			dnsip = ipDNS1Broker
-			return dnsip
-		} else if opciondns == 2 { //redirige a dns2
-			dnsip = ipDNS2Broker
-			return dnsip
-		} else if opciondns == 3 { //redirige a dns3
-			dnsip = ipDNS3Broker
-			return dnsip
+		if opciondns != 0 {
+
+			fmt.Println("Redirigiendo a DNS", opciondns, "...")
+			if opciondns == 1 { //redirige a dns1
+				dnsip = ipDNS1Broker
+				return dnsip
+			} else if opciondns == 2 { //redirige a dns2
+				dnsip = ipDNS2Broker
+				return dnsip
+			} else if opciondns == 3 { //redirige a dns3
+				dnsip = ipDNS3Broker
+				return dnsip
+			}
 		}
 	}
 }

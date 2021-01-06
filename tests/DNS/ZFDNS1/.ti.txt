@@ -1,3 +1,0 @@
-2,0,0
-google.ti IN A 10.2.3.4
-facebook.ti IN A 10.2.3.4
