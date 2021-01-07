@@ -706,7 +706,7 @@ func comprobacionRelojes(folder string, log string, nombreDominio string, reloj 
 				auxSplitDNSpropio := strings.Split(lines[0], ",")
 				auxSplitDNSexterno := strings.Split(reloj, ",")
 
-				for i, valor := range aux_split_DNSpropio {
+				for i, valor := range auxSplitDNSpropio {
 
 					valorDNSpropia, err2 := strconv.Atoi(valor)
 					if err2 != nil {
@@ -720,7 +720,7 @@ func comprobacionRelojes(folder string, log string, nombreDominio string, reloj 
 
 						if valorDNSpropia < valorDNSexterna {
 							merge(j, nombreDominio, log)
-							nuevoReloj += aux_split_DNSexterno[i]
+							nuevoReloj += auxSplitDNSexterno[i]
 							nuevoReloj += ","
 						} else {
 							nuevoReloj += valor

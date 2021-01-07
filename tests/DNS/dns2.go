@@ -630,8 +630,7 @@ func replicandoInfo(log string, zf string) {
 	cont := 0
 	extensiones := ""
 
-<<<<<<< HEAD
-	for _, a := range aux_zf {
+	for _, a := range auxZf {
 
 		a_aux := strings.Fields(a)
 		fmt.Println(a)
@@ -645,13 +644,6 @@ func replicandoInfo(log string, zf string) {
 				extensiones += "?"
 				fmt.Println("extension", extension)
 			}
-=======
-	for _, a := range auxZf {
-		fmt.Println(a)
-		aAux := strings.Split(a, " ")
-		fmt.Println(aAux)
-		for i, x := range aAux {
->>>>>>> 6b549d12578968a22d1673d83bb2def6a9daa8da
 			if i == 1 {
 				reloj := x
 				fmt.Println("reloj es ", reloj)
@@ -681,7 +673,6 @@ func replicandoInfo(log string, zf string) {
 
 	}
 
-<<<<<<< HEAD
 	fmt.Println("data", data)
 	fmt.Println("extensiones", data)
 
@@ -719,19 +710,6 @@ func replicandoInfo(log string, zf string) {
 
 			//fmt.Println("aux_2 es",aux_2)
 
-=======
-	aux2 := strings.Split(data, "?")
-
-	for _, x := range aux2 {
-		var file, err = os.OpenFile(pathZF, os.O_APPEND|os.O_WRONLY, 0644)
-		if isError(err) {
-			fmt.Println(err)
-		}
-		defer file.Close()
-		_, err = fmt.Fprintln(file, x)
-		if isError(err) {
-			fmt.Println(err)
->>>>>>> 6b549d12578968a22d1673d83bb2def6a9daa8da
 		}
 	}
 
