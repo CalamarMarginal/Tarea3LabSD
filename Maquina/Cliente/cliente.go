@@ -71,7 +71,7 @@ func compareReloj(reloj1 string, reloj2 string) bool { //formato "x,y,z"
 		if err2 != nil {
 			fmt.Println(err)
 		}
-		if i2 > i1 { //valor reloj es mayor en el visitado
+		if i2 >= i1 { //valor reloj es mayor en el visitado
 			continue
 		} else {
 			return false
@@ -134,7 +134,15 @@ func clientBroker(c clientepb.ClienteBrokerServiceClient) {
 					}
 
 				} else {
-					fmt.Println("No se ha encontrado el dominio")
+					_, ok3 := dictConsulta[dominio]
+					if ok3 == true {
+						waux := strings.Split(dictConsulta[dominio], "?")
+						fmt.Println("La ip del dominio es ", waux[2])
+						fmt.Println("El reloj es ", waux[0])
+						fmt.Println("La DNS que respondio es ", waux[1])
+					} else {
+						fmt.Println("No se ha encontrado el dominio")
+					}
 				}
 			} else {
 				_, ok2 := dictConsulta[dominio]
