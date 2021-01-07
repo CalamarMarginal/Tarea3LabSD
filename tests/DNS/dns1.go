@@ -630,7 +630,6 @@ func clientDNS1DNS3(c clientDNSpb.ClientDNSServiceClient) {
 	}
 
 	log := res.GetLog()
-	fmt.Println("DNS3 -- LOooooooooooooooooooooooooooooooog", log)
 	reloj := res.GetReloj()
 
 	// fmt.Println("DNS 2 --> log: : ", log)
@@ -765,8 +764,10 @@ func comprobacionRelojes(folder string, log string, nombreDominio string, reloj 
 	}
 
 	if flag == 0 {
+		fmt.Println("reloj !!!", reloj)
 		fmt.Println("no existe en este dns", nombreDominio)
 		merge(posicion, nombreDominio, log)
+		fixRelojes(nombreDominio, reloj)
 
 	}
 
@@ -931,7 +932,6 @@ func merge(posicion int, nombreDominio string, log string) {
 			j++
 		}
 		if j > 1 {
-			fmt.Println("------------------", cmd)
 			aux := strings.Split(cmd, " ")
 			dominio := aux[1] //aca esta el comando
 			fmt.Println("dominio es: ", dominio)
