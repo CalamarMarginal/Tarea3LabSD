@@ -538,7 +538,6 @@ func clientDNS1DNS2(c clientDNSpb.ClientDNSServiceClient) {
 
 	for i, nombreDominio := range auxDominio {
 		if len(nombreDominio) > 0 {
-			fmt.Println("NOMBR DOMINIO", nombreDominio)
 			auxNombreDominio := strings.Split(nombreDominio, " ")
 			auxReloj := strings.Split(reloj, "?")
 			nombreDominio := auxNombreDominio[0]
@@ -630,7 +629,26 @@ func clientDNS1DNS3(c clientDNSpb.ClientDNSServiceClient) {
 		log.Printf("Error, calling DNS3: \n")
 	}
 
-	log.Printf("DNS3 Responde: %v", res)
+	log := res.GetLog()
+	fmt.Println("DNS3 -- LOooooooooooooooooooooooooooooooog", log)
+	reloj := res.GetReloj()
+
+	// fmt.Println("DNS 2 --> log: : ", log)
+	// fmt.Println("DNS 2 --> reloj: : ", reloj)
+
+	auxDominio := strings.Split(log, "?")
+
+	for i, nombreDominio := range auxDominio {
+		if len(nombreDominio) > 0 {
+			auxNombreDominio := strings.Split(nombreDominio, " ")
+			auxReloj := strings.Split(reloj, "?")
+			nombreDominio := auxNombreDominio[0]
+			// fmt.Println("nombreDominio", nombreDominio)
+			// fmt.Println("reloj", auxReloj[i])
+			comprobacionRelojes("./ZFDNS1", log, nombreDominio, auxReloj[i])
+		}
+	}
+	// recorrerDirectorioRelojNuevo("./ZFDNS1")
 
 	return
 
@@ -658,16 +676,18 @@ func clientDNS3confirmation(wg *sync.WaitGroup) {
 }
 
 func clientDNS1DNS3Confirmation(c clientDNSpb.ClientDNSServiceClient) {
-	//se crea un request basada en una estructura del protocol buffer
+	dataLog := recorrerDirectorio("./LogDNS1")
+	dataZf := recorrerDirectorio("./ZFDNS1")
+
 	req := &clientDNSpb.ClientDNSRequestConfirmation{
-		Log: "log",
-		Zf:  "zf",
+		Log: dataLog,
+		Zf:  dataZf,
 	}
 
 	res, err := c.ClientDNSConfirmation(context.Background(), req)
 
 	if err != nil {
-		log.Printf("Error calling DNS3 : \n")
+		log.Printf("Error calling DNS2 : \n")
 	}
 
 	log.Printf("DNS3 responde: %v", res)
@@ -1020,15 +1040,17 @@ func main() {
 			<-timer2.C
 			// go clientDNS3()
 			go clientDNS2(&wg2)
-			timer3 := time.NewTimer(1 * time.Second)
+			timer3 := time.NewTimer(5 * time.Second)
 			<-timer3.C
 			go clientDNS2confirmation(&wg2)
-			timer4 := time.NewTimer(1 * time.Second)
+			timer4 := time.NewTimer(5 * time.Second)
 			<-timer4.C
 			go clientDNS3(&wg2)
-			timer5 := time.NewTimer(1 * time.Second)
+			timer5 := time.NewTimer(5 * time.Second)
 			<-timer5.C
 			go clientDNS3confirmation(&wg2)
+			timer6 := time.NewTimer(5 * time.Second)
+			<-timer6.C
 			fmt.Println("300 segundos transcurridos")
 			wg2.Wait()
 		}
