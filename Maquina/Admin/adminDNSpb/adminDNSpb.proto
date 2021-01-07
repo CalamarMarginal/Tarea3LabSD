@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package admind;
+
+//ruta
+option go_package = "";
+
+message CommandAdminDNS {
+    string tipoComm = 1; //create-update-delete
+    string nombreDominio = 2; //nombre.dominio
+    string tipoCambio = 3; //nil - <nombre>|<ip>
+    string paramNuevo = 4; //ip - <valornuevo> - nil
+}
+
+message DnsResponse {
+    string ack = 1;
+}
+
+service AdminDNSService {
+    // admin envia comando -> dns recibe
+    rpc AdminDNSComm (CommandAdminDNS) returns (DnsResponse) {};
+}

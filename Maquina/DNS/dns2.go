@@ -20,17 +20,17 @@ import (
 	"google.golang.org/grpc"
 )
 
-const ipBroker string = "0.0.0.0:50058"
-const ipDNS1 string = "0.0.0.0:50052"
-const ipDNS2 string = "0.0.0.0:50053" //puerto propio
-const ipDNS3 string = "0.0.0.0:50054"
+const ipBroker string = "10.10.28.70:50058"
+const ipDNS1 string = "10.10.28.71:50052"
+const ipDNS2 string = "10.10.28.72:50053" //puerto propio
+const ipDNS3 string = "10.10.28.73:50054"
 
-const ipDNS1Broker string = "0.0.0.0:50055"
-const ipDNS2Broker string = "0.0.0.0:50056" //puerto propio
-const ipDNS3Broker string = "0.0.0.0:50057"
+const ipDNS1Broker string = "10.10.28.71:50055"
+const ipDNS2Broker string = "10.10.28.72:50056" //puerto propio
+const ipDNS3Broker string = "10.10.28.73:50057"
 
-const ipDNS1DNS2 string = "0.0.0.0:50050" //puerto propio
-const ipDNS1DNS3 string = "0.0.0.0:50051"
+const ipDNS1DNS2 string = "10.10.28.72:50050" //puerto propio
+const ipDNS1DNS3 string = "10.10.28.73:50051"
 
 var auxiliar int //si el auxiliar es 1 es porque es la primera vez que se crea el archivo
 
@@ -505,7 +505,7 @@ func (*serverDNS) ClientDNS(ctx context.Context, req *clientDNSpb.ClienteDNSRequ
 		}
 	}
 
-	// fmt.Println("reloj", reloj)
+	fmt.Println("reloj", reloj)
 
 	res := &clientDNSpb.ClientDNSResponse{
 		Log:   dataLog,
@@ -540,123 +540,94 @@ func replicandoInfo(log string, zf string) {
 	auxLog := strings.Split(log, "?")
 	for _, valores := range auxLog {
 		valorEspecifico := strings.Split(valores, " ")
-		fmt.Println("valorEspecifico: ", valorEspecifico)
-		if len(valorEspecifico) > 2 {
+		fmt.Println(valorEspecifico)
+		for k, term := range valorEspecifico {
+			if k == 0 {
 
-			for k, term := range valorEspecifico {
-				if k == 0 {
+				extension += term
+				fmt.Println(extension)
+				if len(extension) > 2 {
 
-					extension += term
-					fmt.Println("La extension es", extension)
-					if len(extension) > 2 {
-
-						pathZF = "./ZFDNS2/" + extension
-						pathLog = "./LogDNS2/" + extension
-						fmt.Println("pathZF", pathZF)
-						fmt.Println("pathLog", pathLog)
-						borrarRegistro(pathZF)
-						borrarRegistro(pathLog)
-						createFile(pathZF)
-						createFile(pathLog)
-					}
-					extension = ""
-
-				} else if k != 0 {
-					if term == "create" || term == "update" {
-
-						cmd = cmd + term
-						i++
-						continue
-					}
-					if i > 0 {
-						cmd = cmd + " " + term
-						i++
-					}
-					if i > 2 {
-						var file, err = os.OpenFile(pathLog, os.O_APPEND|os.O_WRONLY, 0644)
-						if isError(err) {
-							fmt.Println(err)
-						}
-						defer file.Close()
-						_, err = fmt.Fprintln(file, cmd)
-						if isError(err) {
-							fmt.Println(err)
-						}
-						fmt.Println("escribiendo data ", cmd)
-						fmt.Println("en el siguiente path ", pathLog)
-
-						fmt.Println(cmd) //aca esta el comando
-						i = 0
-						cmd = ""
-
-					}
-					if term == "delete" {
-
-						cmd = cmd + term
-						j++
-						continue
-					}
-					if j > 0 {
-						cmd = cmd + " " + term
-						j++
-					}
-					if j > 1 {
-						var file, err = os.OpenFile(pathLog, os.O_APPEND|os.O_WRONLY, 0644)
-						if isError(err) {
-							fmt.Println(err)
-						}
-						defer file.Close()
-						_, err = fmt.Fprintln(file, cmd)
-						if isError(err) {
-							fmt.Println(err)
-						}
-
-						fmt.Println("escribiendo data ", cmd)
-						fmt.Println("en el siguiente path ", pathLog)
-
-						fmt.Println(cmd)
-						cmd = ""
-						j = 0
-
-					}
+					pathZF = "./ZFDNS2/" + extension
+					pathLog = "./LogDNS2/" + extension
+					fmt.Println("pathZF", pathZF)
+					fmt.Println("pathLog", pathLog)
+					borrarRegistro(pathZF)
+					borrarRegistro(pathLog)
+					createFile(pathZF)
+					createFile(pathLog)
 				}
 
+			} else if k != 0 {
+				if term == "create" || term == "update" {
+
+					cmd = cmd + term
+					i++
+					continue
+				}
+				if i > 0 {
+					cmd = cmd + " " + term
+					i++
+				}
+				if i > 2 {
+					var file, err = os.OpenFile(pathLog, os.O_APPEND|os.O_WRONLY, 0644)
+					if isError(err) {
+						fmt.Println(err)
+					}
+					defer file.Close()
+					_, err = fmt.Fprintln(file, cmd)
+					if isError(err) {
+						fmt.Println(err)
+					}
+
+					fmt.Println(cmd) //aca esta el comando
+					i = 0
+					cmd = ""
+
+				}
+				if term == "delete" {
+
+					cmd = cmd + term
+					j++
+					continue
+				}
+				if j > 0 {
+					cmd = cmd + " " + term
+					j++
+				}
+				if j > 1 {
+					var file, err = os.OpenFile(pathLog, os.O_APPEND|os.O_WRONLY, 0644)
+					if isError(err) {
+						fmt.Println(err)
+					}
+					defer file.Close()
+					_, err = fmt.Fprintln(file, cmd)
+					if isError(err) {
+						fmt.Println(err)
+					}
+
+					fmt.Println(cmd)
+					cmd = ""
+					j = 0
+
+				}
 			}
+
 		}
 	}
 
 	auxZf := strings.Split(zf, "?")
 	data := ""
 	cont := 0
-	extensiones := ""
 
-<<<<<<< HEAD
-	for _, a := range aux_zf {
-
-		a_aux := strings.Fields(a)
-		fmt.Println(a)
-		fmt.Println(a_aux)
-		for i, x := range a_aux {
-			if i == 0 {
-
-				extension := x
-				pathZF = "./ZFDNS2/" + extension
-				extensiones += extension
-				extensiones += "?"
-				fmt.Println("extension", extension)
-			}
-=======
 	for _, a := range auxZf {
 		fmt.Println(a)
 		aAux := strings.Split(a, " ")
 		fmt.Println(aAux)
 		for i, x := range aAux {
->>>>>>> 6b549d12578968a22d1673d83bb2def6a9daa8da
 			if i == 1 {
 				reloj := x
 				fmt.Println("reloj es ", reloj)
-				fmt.Println("escribiendo reloj ", reloj)
-				fmt.Println("en el siguiente path ", pathZF)
 				var file, err = os.OpenFile(pathZF, os.O_APPEND|os.O_WRONLY, 0644)
 				if isError(err) {
 					fmt.Println(err)
@@ -666,7 +637,6 @@ func replicandoInfo(log string, zf string) {
 				if isError(err) {
 					fmt.Println(err)
 				}
-
 			} else if i > 1 && cont < 4 {
 				data += x
 				data += " "
@@ -678,48 +648,10 @@ func replicandoInfo(log string, zf string) {
 
 			}
 		}
+		fmt.Println(data)
 
 	}
 
-<<<<<<< HEAD
-	fmt.Println("data", data)
-	fmt.Println("extensiones", data)
-
-	aux_2 := strings.Split(data, "?")
-	//aux_3 := strings.Split(extensiones, "?")
-
-	//
-
-	cont = 0
-
-	for _, x := range aux_2 {
-
-		if len(x) > 2 {
-			aux_4 := strings.Fields(x)
-			fmt.Println("aux_4", aux_4)
-			fmt.Println("aux_4[0]", aux_4[0])
-
-			separacion := strings.Split(aux_4[0], ".")
-			fmt.Println("separacion", separacion)
-			extension_sin_punto := separacion[1]
-			extension_final := "." + extension_sin_punto + ".txt"
-			pathZF = "./ZFDNS2/" + extension_final
-			data = strings.Join(aux_4, " ")
-			fmt.Println("data es", data)
-			fmt.Println("path es ", pathZF)
-			var file, err = os.OpenFile(pathZF, os.O_APPEND|os.O_WRONLY, 0644)
-			if isError(err) {
-				fmt.Println(err)
-			}
-			defer file.Close()
-			_, err = fmt.Fprintln(file, data)
-			if isError(err) {
-				fmt.Println(err)
-			}
-
-			//fmt.Println("aux_2 es",aux_2)
-
-=======
 	aux2 := strings.Split(data, "?")
 
 	for _, x := range aux2 {
@@ -731,15 +663,14 @@ func replicandoInfo(log string, zf string) {
 		_, err = fmt.Fprintln(file, x)
 		if isError(err) {
 			fmt.Println(err)
->>>>>>> 6b549d12578968a22d1673d83bb2def6a9daa8da
 		}
 	}
 
 }
 
 func (*serverDNS) ClientDNSConfirmation(ctx context.Context, req *clientDNSpb.ClientDNSRequestConfirmation) (*clientDNSpb.ClientDNSResponseConfirmation, error) {
-	fmt.Println("log-----:", req.GetLog())
-	fmt.Println("zf------:", req.GetZf())
+	fmt.Println("log:", req.GetLog())
+	fmt.Println("zf:", req.GetZf())
 
 	res := &clientDNSpb.ClientDNSResponseConfirmation{
 		Ack: "replicando informacion en el DNS2",

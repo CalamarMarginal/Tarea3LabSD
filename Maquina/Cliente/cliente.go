@@ -11,7 +11,7 @@ import (
 	"google.golang.org/grpc"
 )
 
-const ipBroker string = "0.0.0.0:50058"
+const ipBroker string = "10.10.28.70:50058"
 
 var dictConsulta = map[string]string{}
 

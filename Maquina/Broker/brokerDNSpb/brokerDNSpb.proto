@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package brodns;
+
+//ruta
+option go_package = "";
+
+message ClienteBrRequest {
+    string commCliente = 1;
+}
+
+message DnsClientResponse {
+    string ipDominio = 1;
+    string reloj = 2;
+    string ipDNS = 3;
+}
+
+service BrokerDNSService {
+    // broker envia comando del cliente -> DNS responde apropiadamente
+    rpc BrokerDNSComm (ClienteBrRequest) returns (DnsClientResponse) {};
+}

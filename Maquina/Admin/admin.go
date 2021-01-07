@@ -15,7 +15,7 @@ import (
 	"google.golang.org/grpc"
 )
 
-const ipBroker string = "0.0.0.0:50059"
+const ipBroker string = "10.10.28.70:50059"
 
 var lastDNSVisited string
 
