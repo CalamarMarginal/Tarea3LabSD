@@ -522,6 +522,7 @@ func clientDNS1DNS2(c clientDNSpb.ClientDNSServiceClient) {
 	}
 
 	log := res.GetLog()
+	// fmt.Println("LOooooooooooooooooooooooooooooooog", log)
 	reloj := res.GetReloj()
 
 	// fmt.Println("DNS 2 --> log: : ", log)
@@ -531,6 +532,7 @@ func clientDNS1DNS2(c clientDNSpb.ClientDNSServiceClient) {
 
 	for i, nombreDominio := range auxDominio {
 		if len(nombreDominio) > 0 {
+			fmt.Println("NOMBR DOMINIO", nombreDominio)
 			auxNombreDominio := strings.Split(nombreDominio, " ")
 			aux_reloj := strings.Split(reloj, "?")
 			nombreDominio := auxNombreDominio[0]
@@ -673,10 +675,18 @@ func comprobacionRelojes(folder string, log string, nombreDominio string, reloj 
 		fmt.Println(err)
 	}
 
+	flag := 0
+	posicion := 0
+
 	// fmt.Println("nombreDominio", nombreDominio)
 
 	for j, archivo := range archivos {
+		fmt.Println("archivo", archivo.Name())
+		fmt.Println("nombreDominio", nombreDominio)
+		posicion = j // para los dns que no existen
+		fmt.Println("posicion", posicion)
 		if archivo.Name() == nombreDominio {
+			flag = 1
 
 			path := folder + "/" + archivo.Name()
 			input, err := ioutil.ReadFile(path)
@@ -689,9 +699,6 @@ func comprobacionRelojes(folder string, log string, nombreDominio string, reloj 
 			if reloj != lines[0] {
 				aux_split_DNSpropio := strings.Split(lines[0], ",")
 				aux_split_DNSexterno := strings.Split(reloj, ",")
-
-				// fmt.Println("reloj dns propio", aux_split_DNSpropio)
-				// fmt.Println("reloj dns externo", aux_split_DNSexterno)
 
 				for i, valor := range aux_split_DNSpropio {
 
@@ -706,7 +713,7 @@ func comprobacionRelojes(folder string, log string, nombreDominio string, reloj 
 					if valor != aux_split_DNSexterno[i] {
 
 						if valorDNSpropia < valorDNSexterna {
-							merge(j, valorDNSexterna, nombreDominio, log)
+							merge(j, nombreDominio, log)
 							nuevoReloj += aux_split_DNSexterno[i]
 							nuevoReloj += ","
 						} else {
@@ -722,13 +729,97 @@ func comprobacionRelojes(folder string, log string, nombreDominio string, reloj 
 				}
 				fmt.Println("nuevo Reloj es ", nuevoReloj)
 
+				fixRelojes(nombreDominio, nuevoReloj)
+				nuevoReloj = ""
+
 			}
 
 		}
+
 	}
+
+	if flag == 0 {
+		fmt.Println("no existe en este dns", nombreDominio)
+		merge(posicion, nombreDominio, log)
+
+	}
+
 }
 
-func merge(posicion int, valorDNSexterna int, nombreDominio string, log string) {
+func fixRelojes(nombreDominio string, nuevoReloj string) {
+	fmt.Println("--------------------------Nombre Dominio-----------------", nombreDominio)
+	fmt.Println("--------------------------nuevoReloj -----------------", nuevoReloj)
+
+	relojAntiguo := ""
+
+	i := nuevoReloj
+	aux_zf := strings.Split(i, ",")
+	fmt.Println(aux_zf)
+	fixReloj := ""
+	for i, x := range aux_zf {
+		if i < 2 {
+			fmt.Println(x)
+			fixReloj += x
+			fixReloj += ","
+
+		} else {
+			fixReloj += x
+		}
+	}
+
+	fmt.Println(fixReloj)
+
+	archivos, err := ioutil.ReadDir("./ZFDNS1")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for _, archivo := range archivos {
+
+		fmt.Println("Nombre:", archivo.Name())
+		// fmt.Println("Tamaño:", archivo.Size())
+		// fmt.Println("Modo:", archivo.Mode())
+		// fmt.Println("Ultima modificación:", archivo.ModTime())
+		// fmt.Println("Es directorio?:", archivo.IsDir())
+
+		if archivo.Name() == nombreDominio {
+
+			path := "./ZFDNS1/" + archivo.Name()
+			fmt.Println("path es :", path)
+			input, err := ioutil.ReadFile(path)
+			if err != nil {
+				log.Fatalln(err)
+			}
+			lines := strings.Split(string(input), "\n")
+
+			for _, line := range lines {
+				if strings.Contains(line, ",") {
+					relojAntiguo = line
+					fmt.Println("RELOJ ANTIGUO ES", relojAntiguo)
+					break
+				}
+
+			}
+			input, err2 := ioutil.ReadFile(path)
+			if err2 != nil {
+				fmt.Println(err2)
+				os.Exit(1)
+			}
+
+			output := bytes.Replace(input, []byte(relojAntiguo), []byte(nuevoReloj), 1)
+
+			if err2 = ioutil.WriteFile(path, output, 0666); err2 != nil {
+				fmt.Println(err2)
+				os.Exit(1)
+			}
+
+		}
+
+	}
+
+}
+
+func merge(posicion int, nombreDominio string, log string) {
 
 	i := 0
 	j := 0
@@ -736,7 +827,7 @@ func merge(posicion int, valorDNSexterna int, nombreDominio string, log string) 
 	cmd := ""
 
 	aux := strings.Split(log, "?")
-	// fmt.Println("aux", aux)
+	fmt.Println("aux", aux)
 
 	valorAiterar := aux[posicion]
 
@@ -755,7 +846,7 @@ func merge(posicion int, valorDNSexterna int, nombreDominio string, log string) 
 			i++
 		}
 		if i > 2 {
-			fmt.Println("------------------", cmd) //aca esta el comando
+			//aca esta el comando
 			aux := strings.Split(cmd, " ")
 			dominio := aux[1]
 			ip := aux[2]
@@ -778,8 +869,7 @@ func merge(posicion int, valorDNSexterna int, nombreDominio string, log string) 
 			k++
 		}
 		if k > 2 {
-			fmt.Println("------------------", cmd) //aca esta el comando
-			fmt.Println("nombreDominio¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿", nombreDominio)
+			//aca esta el comando
 			extension := strings.Split(nombreDominio, ".")
 			if strings.HasSuffix(cmd, extension[1]) {
 				aux := strings.Split(cmd, " ")
@@ -851,7 +941,6 @@ func recorrerDirectorioRelojNuevo(folder string) {
 		// fmt.Println("Modo:", archivo.Mode())
 		// fmt.Println("Ultima modificación:", archivo.ModTime())
 		// fmt.Println("Es directorio?:", archivo.IsDir())
-		fmt.Println("-----------------------------------------")
 		path := folder + "/" + archivo.Name()
 		input, err := ioutil.ReadFile(path)
 		if err != nil {
@@ -890,14 +979,12 @@ func recorrerDirectorio(folder string) string {
 		// fmt.Println("Modo:", archivo.Mode())
 		// fmt.Println("Ultima modificación:", archivo.ModTime())
 		// fmt.Println("Es directorio?:", archivo.IsDir())
-		fmt.Println("-----------------------------------------")
 		path := folder + "/" + archivo.Name()
 		input, err := ioutil.ReadFile(path)
 		if err != nil {
 			log.Fatalln(err)
 		}
 		lines := strings.Split(string(input), "\n")
-
 		for _, line := range lines {
 			data += line
 			data += " "
